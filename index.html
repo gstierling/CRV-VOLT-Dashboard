@@ -144,8 +144,16 @@
     display:flex;
     align-items:center;
     justify-content:center;
-    flex-wrap:nowrap;
+    flex-wrap:wrap;
+    column-gap:clamp(14px, 4vw, 26px);
+    row-gap:6px;
+  }
+  .botellas-grupo{
+    display:flex;
+    align-items:center;
+    justify-content:center;
     gap:clamp(10px, 3.2vw, 20px);
+    flex-wrap:nowrap;
   }
   .botellas-num{
     font-size:clamp(2.8rem, 13vw, 4.8rem);
@@ -156,7 +164,8 @@
     flex-shrink:0;
   }
   .botellas-pct{
-    font-size:clamp(1rem, 4vw, 1.5rem);
+    font-size:clamp(2rem, 8vw, 3rem);
+    line-height:1;
     font-weight:800;
     color:var(--text-dim);
     white-space:nowrap;
@@ -893,9 +902,12 @@
 
   <div class="bloque-botellas">
     <div class="botellas-fila">
+      <div class="botellas-grupo">
       <h2 class="botellas-header">LATAS<br>entregadas</h2>
       <span class="botellas-num" id="suma-total">0</span>
-      <span class="botellas-pct" id="botellas-pct">(0%)</span>
+      </div>
+      <div class="botellas-grupo">
+      <span class="botellas-pct" id="botellas-pct">(0,0%)</span>
       <svg class="lata-progreso" viewBox="0 0 60 124" aria-label="Avance de la meta de latas">
         <defs>
           <clipPath id="lata-clip">
@@ -931,6 +943,7 @@
         <!-- brillo -->
         <rect x="14" y="30" width="3" height="76" rx="1.5" fill="rgba(255,255,255,0.75)"/>
       </svg>
+      </div>
     </div>
     <div class="sync-estado" id="sync-estado"></div>
   </div>
@@ -1242,7 +1255,8 @@ function formatNumero(n){
 function render(){
   const total = cuentas.v1 + cuentas.v2 + cuentas.v3 + cuentas.v4;
   document.getElementById('suma-total').textContent = formatNumero(total);
-  const pct = Math.round((total / META_LATAS) * 100);
+  const pct = new Intl.NumberFormat('es-CL', { minimumFractionDigits:1, maximumFractionDigits:1 })
+    .format(Math.round(total / META_LATAS * 1000) / 10);
   document.getElementById('lata-liquido').style.transform = `scaleY(${Math.min(total / META_LATAS, 1)})`;
   document.getElementById('botellas-pct').textContent = `(${pct}%)`;
 

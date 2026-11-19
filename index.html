@@ -331,7 +331,7 @@
     margin-top:16px;
   }
   .tramos-titulo{
-    margin:0 0 4px;
+    margin:0 0 12px;
     font-size:1.6rem;
     font-weight:900;
     color:var(--teal);
@@ -356,28 +356,49 @@
 
   /* ===== Registro INICIO jornada ===== */
   .bloque-inicio{
-    display:flex;
-    justify-content:center;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
     margin:0 0 16px;
   }
   .btn-inicio{
     display:flex;
+    flex-direction:column;
     align-items:center;
     justify-content:center;
-    gap:8px;
+    gap:2px;
     width:100%;
+    min-height:68px;
+    line-height:1.15;
+    text-align:center;
     background:var(--teal);
     color:#ffffff;
     border:none;
     border-radius:14px;
-    padding:14px 16px;
+    padding:10px 8px;
     font-family:'Nunito',sans-serif;
     font-weight:900;
-    font-size:clamp(1rem, 4.6vw, 1.2rem);
+    font-size:clamp(0.92rem, 4.2vw, 1.15rem);
     cursor:pointer;
     box-shadow:0 4px 14px rgba(16,34,102,0.25);
   }
-  .btn-inicio .manito{font-size:1.2rem; line-height:1;}
+  .btn-inicio .btn-estado{font-size:0.8rem; font-weight:800; opacity:0.85;}
+  .btn-termino{background:var(--teal-dark);}
+  .campo textarea{
+    width:100%;
+    min-height:140px;
+    resize:vertical;
+    background:var(--panel-2);
+    border:2px solid var(--border);
+    border-radius:10px;
+    color:var(--text);
+    font-family:'Nunito',sans-serif;
+    font-size:1.05rem;
+    font-weight:600;
+    padding:11px 12px;
+    outline:none;
+  }
+  .campo textarea:focus{border-color:var(--teal);}
   .btn-inicio.registrado{
     background:var(--panel);
     color:var(--teal);
@@ -827,10 +848,8 @@
   </div>
 
   <div class="bloque-inicio">
-    <button class="btn-inicio" id="btn-inicio" type="button">
-      <span class="manito">👉</span>
-      <span id="btn-inicio-label">Registro INICIO jornada</span>
-    </button>
+    <button class="btn-inicio" id="btn-inicio" type="button"></button>
+    <button class="btn-inicio btn-termino" id="btn-termino" type="button"></button>
   </div>
 
   <div class="bloque-botellas">
@@ -882,8 +901,7 @@
   </div>
 
   <div class="seccion-tramos">
-    <h2 class="tramos-titulo">Latas por media hora</h2>
-    <p class="tramos-sub">Registradas con el joystick entre 9.00 y 14.00 hrs</p>
+    <h2 class="tramos-titulo">Ritmo de entrega</h2>
     <div class="tramos-wrap"><canvas id="chart-tramos"></canvas></div>
   </div>
 
@@ -1009,6 +1027,29 @@
     <div class="modal-acciones">
       <button class="btn-modal btn-modal-cancelar" id="btn-inicio-cancelar" type="button">Cerrar</button>
       <button class="btn-modal btn-modal-guardar" id="btn-inicio-guardar" type="button">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-termino">
+  <div class="modal-panel" id="modal-termino-panel">
+    <h2 class="modal-titulo">Registro TÉRMINO jornada</h2>
+    <p class="modal-sub" id="modal-termino-fecha"></p>
+
+    <div class="form-grupo">
+      <div class="campo">
+        <label for="fin-sobrantes">Cantidad de latas que sobraron</label>
+        <input class="num" id="fin-sobrantes" type="text" readonly inputmode="none" placeholder="—" data-decimal="0" data-titulo="Latas que sobraron">
+      </div>
+      <div class="campo">
+        <label for="fin-comentario">Comentarios <span class="opcional">(cuestiones relevantes u observaciones útiles para mejorar el desempeño del punto)</span></label>
+        <textarea id="fin-comentario" maxlength="1000" placeholder="Escribe aquí tus comentarios"></textarea>
+      </div>
+    </div>
+
+    <div class="modal-acciones">
+      <button class="btn-modal btn-modal-cancelar" id="btn-termino-cancelar" type="button">Cerrar</button>
+      <button class="btn-modal btn-modal-guardar" id="btn-termino-guardar" type="button">Guardar</button>
     </div>
   </div>
 </div>
@@ -1186,6 +1227,7 @@ function cargarDatos(fecha){
       seguidores9Valor = (data.seguidores9 === null || data.seguidores9 === undefined) ? null : data.seguidores9;
       seguidores14Valor = (data.seguidores14 === null || data.seguidores14 === undefined) ? null : data.seguidores14;
       inicioDatos = data.inicio || null;
+      terminoDatos = data.termino || null;
       tramos = Array.isArray(data.tramos) && data.tramos.length === 10 ? data.tramos : new Array(10).fill(0);
       renderTramos();
       render();
@@ -1601,7 +1643,9 @@ const CAMPOS_NUM = ['latas', 'cavas', 'hielo', 'agua'];
 const modalInicio = document.getElementById('modal-inicio');
 const modalInicioPanel = document.getElementById('modal-inicio-panel');
 const btnInicio = document.getElementById('btn-inicio');
-const btnInicioLabel = document.getElementById('btn-inicio-label');
+function pintarBotonJornada(btn, titulo, estado){
+  btn.innerHTML = `<span>Registro<br>${titulo} jornada</span>` + (estado ? `<span class="btn-estado">${estado}</span>` : '');
+}
 
 (function construirCamposPersonal(){
   const cont = document.getElementById('campos-personal');
@@ -1635,24 +1679,25 @@ function camposPendientes(){
 
 function actualizarBotonInicio(){
   const esHoy = fechaSeleccionada === FECHA_HOY;
-  if(!esHoy){ btnInicio.style.display = 'none'; return; }
-  btnInicio.style.display = '';
+  document.querySelector('.bloque-inicio').style.display = esHoy ? '' : 'none';
+  actualizarBotonTermino();
+  if(!esHoy) return;
   const pendientes = camposPendientes().length;
   if(pendientes === 0){
     btnInicio.classList.add('registrado');
     btnInicio.classList.remove('parpadeando');
     btnInicio.disabled = true;
-    btnInicioLabel.textContent = '✓ INICIO jornada completo';
+    btnInicio.innerHTML = '<span>✓ INICIO<br>jornada completo</span>';
   } else if(pendientes < TODOS_CAMPOS_INICIO.length){
     btnInicio.classList.remove('registrado');
     btnInicio.classList.add('parpadeando');
     btnInicio.disabled = false;
-    btnInicioLabel.textContent = `Registro INICIO jornada (faltan ${pendientes})`;
+    pintarBotonJornada(btnInicio, 'INICIO', `faltan ${pendientes}`);
   } else {
     btnInicio.classList.remove('registrado');
     btnInicio.classList.add('parpadeando');
     btnInicio.disabled = false;
-    btnInicioLabel.textContent = 'Registro INICIO jornada';
+    pintarBotonJornada(btnInicio, 'INICIO', '');
   }
 }
 
@@ -1702,6 +1747,89 @@ document.getElementById('btn-inicio-guardar').addEventListener('click', () => {
       cerrarModalInicio();
       render();
       actualizarBotonInicio();
+      mostrarToast('Datos guardados');
+      cargarListaFechas();
+    },
+    (msg) => {
+      btn.disabled = false; btn.textContent = 'Guardar';
+      mostrarToast('No se pudo registrar' + (msg ? ': ' + msg : '.'), true);
+    }
+  );
+});
+
+/* ================= REGISTRO TÉRMINO JORNADA ================= */
+const CAMPOS_TERMINO = ['sobrantes', 'comentario'];
+let terminoDatos = null;
+const btnTermino = document.getElementById('btn-termino');
+const modalTermino = document.getElementById('modal-termino');
+const modalTerminoPanel = document.getElementById('modal-termino-panel');
+const MIN_1400 = 14*60;
+
+function campoTerminoLleno(k){
+  if(!terminoDatos) return false;
+  const v = terminoDatos[k];
+  return v !== undefined && v !== null && String(v).trim() !== '';
+}
+function terminoPendientes(){ return CAMPOS_TERMINO.filter(k => !campoTerminoLleno(k)); }
+
+function actualizarBotonTermino(){
+  if(fechaSeleccionada !== FECHA_HOY) return;
+  const pendientes = terminoPendientes().length;
+  if(pendientes === 0){
+    btnTermino.classList.add('registrado');
+    btnTermino.classList.remove('parpadeando');
+    btnTermino.disabled = true;
+    btnTermino.innerHTML = '<span>✓ TÉRMINO<br>jornada completo</span>';
+  } else {
+    btnTermino.classList.remove('registrado');
+    btnTermino.disabled = false;
+    btnTermino.classList.toggle('parpadeando', minutosDesdeMedianoche() >= MIN_1400);
+    pintarBotonJornada(btnTermino, 'TÉRMINO', pendientes < CAMPOS_TERMINO.length ? `faltan ${pendientes}` : '');
+  }
+}
+setInterval(actualizarBotonTermino, 15000);
+
+const inputSobrantes = document.getElementById('fin-sobrantes');
+inputSobrantes.addEventListener('click', () => {
+  abrirTeclado({ titulo: inputSobrantes.dataset.titulo, decimal: false, input: inputSobrantes });
+});
+
+btnTermino.addEventListener('click', () => {
+  if(fechaSeleccionada !== FECHA_HOY || terminoPendientes().length === 0) return;
+  document.getElementById('modal-termino-fecha').textContent = labelDeFecha(fechaSeleccionada);
+  inputSobrantes.value = '';
+  document.getElementById('fin-comentario').value = '';
+  inputSobrantes.closest('.campo').style.display = campoTerminoLleno('sobrantes') ? 'none' : '';
+  document.getElementById('fin-comentario').closest('.campo').style.display = campoTerminoLleno('comentario') ? 'none' : '';
+  modalTermino.classList.add('visible');
+  modalTerminoPanel.scrollTop = 0;
+});
+
+function cerrarModalTermino(){ modalTermino.classList.remove('visible'); }
+document.getElementById('btn-termino-cancelar').addEventListener('click', cerrarModalTermino);
+modalTermino.addEventListener('click', (ev) => { if(ev.target === modalTermino) cerrarModalTermino(); });
+
+document.getElementById('btn-termino-guardar').addEventListener('click', () => {
+  const datos = {};
+  if(!campoTerminoLleno('sobrantes')){
+    const v = rawDesdeTexto(inputSobrantes.value);
+    if(v !== '') datos.sobrantes = v;
+  }
+  if(!campoTerminoLleno('comentario')){
+    const v = document.getElementById('fin-comentario').value.trim();
+    if(v !== '') datos.comentario = v;
+  }
+  if(Object.keys(datos).length === 0){ mostrarToast('Llena al menos un campo', true); return; }
+
+  const btn = document.getElementById('btn-termino-guardar');
+  btn.disabled = true; btn.textContent = 'Guardando…';
+  enviarDato(
+    Object.assign({ action:'submitTermino', fecha: fechaSeleccionada }, datos),
+    () => {
+      btn.disabled = false; btn.textContent = 'Guardar';
+      terminoDatos = Object.assign({}, terminoDatos || {}, datos);
+      cerrarModalTermino();
+      actualizarBotonTermino();
       mostrarToast('Datos guardados');
       cargarListaFechas();
     },

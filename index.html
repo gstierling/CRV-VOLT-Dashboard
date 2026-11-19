@@ -501,6 +501,25 @@
   }
   .campo input:focus, .campo input.enfocado{border-color:var(--teal);}
   .campo input.num{cursor:pointer; caret-color:transparent; text-align:center; font-size:1.3rem; font-weight:900;}
+  .campo-seg-fila{
+    display:flex;
+    gap:10px;
+    align-items:stretch;
+  }
+  .campo-seg-fila input{flex:1; min-width:0;}
+  .btn-consultar-form{
+    flex-shrink:0;
+    background:var(--teal);
+    color:#ffffff;
+    border:none;
+    border-radius:10px;
+    padding:8px 12px;
+    font-family:'Nunito',sans-serif;
+    font-weight:800;
+    font-size:0.85rem;
+    line-height:1.15;
+    cursor:pointer;
+  }
   .campos-2col{
     display:grid;
     grid-template-columns:1fr 1fr;
@@ -967,19 +986,16 @@
       <div class="resultado-seguidores-item">
         <span class="resultado-seguidores-titulo">A las 9.00 hrs</span>
         <span class="resultado-seguidores-num" id="resultado-seguidores-9">—</span>
-        <button class="btn-registrar-seg" id="btn-registrar-9" type="button" style="display:none;">Registrar</button>
       </div>
       <div class="resultado-seguidores-item">
         <span class="resultado-seguidores-titulo">A las 14.00 hrs</span>
         <span class="resultado-seguidores-num" id="resultado-seguidores-14">—</span>
-        <button class="btn-registrar-seg" id="btn-registrar-14" type="button" style="display:none;">Registrar</button>
       </div>
       <div class="resultado-seguidores-item resultado-seguidores-ganados">
         <span class="resultado-seguidores-titulo">Ganados</span>
         <span class="resultado-seguidores-num" id="resultado-seguidores-ganados">—</span>
       </div>
     </div>
-    <button class="btn-consultar" id="btn-consultar-seguidores" type="button" style="display:none;">Consultar seguidores @volt.chile</button>
   </div>
 
   <div class="seccion-encuesta">
@@ -1050,27 +1066,41 @@
     <h2 class="modal-titulo">Registro INICIO jornada</h2>
     <p class="modal-sub" id="modal-inicio-fecha"></p>
 
+    <div class="form-grupo" id="grupo-seg9">
+      <div class="campo">
+        <label for="ini-seg9">Seguidores a las 9.00 hrs</label>
+        <div class="campo-seg-fila">
+          <input class="num" id="ini-seg9" type="text" readonly inputmode="none" placeholder="—" data-decimal="0" data-titulo="Seguidores 9.00 hrs">
+          <button class="btn-consultar-form" type="button" data-consultar>Consultar<br>@volt.chile</button>
+        </div>
+      </div>
+    </div>
+
     <div class="form-grupo" id="grupo-punto">
       <div class="campo">
         <label for="ini-ubicacion">Ubicación del punto</label>
         <input id="ini-ubicacion" type="text" maxlength="80" placeholder="Ej: Av. Providencia con Los Leones">
       </div>
+    </div>
+
+    <div class="form-grupo" id="grupo-cantidades">
+      <h3 class="form-grupo-titulo">¿Cuánto llegó?</h3>
       <div class="campos-2col">
         <div class="campo">
-          <label for="ini-latas">Latas que llegaron</label>
-          <input class="num" id="ini-latas" type="text" readonly inputmode="none" placeholder="—" data-decimal="0" data-titulo="Latas que llegaron">
+          <label for="ini-latas">LATAS</label>
+          <input class="num" id="ini-latas" type="text" readonly inputmode="none" placeholder="—" data-decimal="0" data-titulo="LATAS">
         </div>
         <div class="campo">
-          <label for="ini-cavas">Cavas que llegaron</label>
-          <input class="num" id="ini-cavas" type="text" readonly inputmode="none" placeholder="—" data-decimal="0" data-titulo="Cavas que llegaron">
+          <label for="ini-cavas">CAVAS</label>
+          <input class="num" id="ini-cavas" type="text" readonly inputmode="none" placeholder="—" data-decimal="0" data-titulo="CAVAS">
         </div>
         <div class="campo">
-          <label for="ini-hielo">Hielo que llegó</label>
-          <input class="num" id="ini-hielo" type="text" readonly inputmode="none" placeholder="—" data-decimal="1" data-titulo="Hielo que llegó">
+          <label for="ini-hielo">HIELO</label>
+          <input class="num" id="ini-hielo" type="text" readonly inputmode="none" placeholder="—" data-decimal="1" data-titulo="HIELO">
         </div>
         <div class="campo">
-          <label for="ini-agua">Agua que llegó a terreno</label>
-          <input class="num" id="ini-agua" type="text" readonly inputmode="none" placeholder="—" data-decimal="1" data-titulo="Agua que llegó a terreno">
+          <label for="ini-agua">AGUA (Bidones)</label>
+          <input class="num" id="ini-agua" type="text" readonly inputmode="none" placeholder="—" data-decimal="1" data-titulo="AGUA (Bidones)">
         </div>
       </div>
     </div>
@@ -1092,7 +1122,17 @@
     <h2 class="modal-titulo">Registro TÉRMINO jornada</h2>
     <p class="modal-sub" id="modal-termino-fecha"></p>
 
-    <div class="form-grupo">
+    <div class="form-grupo" id="grupo-seg14">
+      <div class="campo">
+        <label for="fin-seg14">Seguidores a las 14.00 hrs</label>
+        <div class="campo-seg-fila">
+          <input class="num" id="fin-seg14" type="text" readonly inputmode="none" placeholder="—" data-decimal="0" data-titulo="Seguidores 14.00 hrs">
+          <button class="btn-consultar-form" type="button" data-consultar>Consultar<br>@volt.chile</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-grupo" id="grupo-termino">
       <div class="campo">
         <label for="fin-sobrantes">Cantidad de latas que sobraron</label>
         <input class="num" id="fin-sobrantes" type="text" readonly inputmode="none" placeholder="—" data-decimal="0" data-titulo="Latas que sobraron">
@@ -1725,6 +1765,15 @@ function pintarBotonJornada(btn, titulo, estado){
   });
 })();
 
+function enviarDatoP(payload){
+  return new Promise((resolve, reject) => enviarDato(payload, resolve, reject));
+}
+
+['ini-seg9', 'fin-seg14'].forEach(idInp => {
+  const inp = document.getElementById(idInp);
+  inp.addEventListener('click', () => abrirTeclado({ titulo: inp.dataset.titulo, decimal: false, input: inp }));
+});
+
 CAMPOS_NUM.forEach(k => {
   const inp = document.getElementById('ini-' + k);
   inp.addEventListener('click', () => {
@@ -1733,9 +1782,10 @@ CAMPOS_NUM.forEach(k => {
   });
 });
 
-const TODOS_CAMPOS_INICIO = ['ubicacion'].concat(CAMPOS_NUM, CAMPOS_PERSONAL.map(c => c.key));
+const TODOS_CAMPOS_INICIO = ['seg9', 'ubicacion'].concat(CAMPOS_NUM, CAMPOS_PERSONAL.map(c => c.key));
 
 function campoLleno(k){
+  if(k === 'seg9') return seguidores9Valor !== null;
   if(!inicioDatos) return false;
   const v = inicioDatos[k];
   return v !== undefined && v !== null && String(v).trim() !== '';
@@ -1775,7 +1825,7 @@ function prepararFormularioInicio(){
     inp.closest('.campo').style.display = campoLleno(k) ? 'none' : '';
   });
   const grupoVisible = (id) => [...document.querySelectorAll(`#${id} .campo`)].some(c => c.style.display !== 'none');
-  ['grupo-punto', 'grupo-personal'].forEach(id => {
+  ['grupo-seg9', 'grupo-punto', 'grupo-cantidades', 'grupo-personal'].forEach(id => {
     document.getElementById(id).style.display = grupoVisible(id) ? '' : 'none';
   });
 }
@@ -1798,34 +1848,43 @@ document.getElementById('btn-inicio-guardar').addEventListener('click', () => {
   const datos = {};
   camposPendientes().forEach(k => {
     const el = document.getElementById('ini-' + k);
-    const v = CAMPOS_NUM.includes(k) ? rawDesdeTexto(el.value) : el.value.trim();
+    const v = (k === 'seg9' || CAMPOS_NUM.includes(k)) ? rawDesdeTexto(el.value) : el.value.trim();
     if(v !== '') datos[k] = v;
   });
 
   if(Object.keys(datos).length === 0){ mostrarToast('Llena al menos un campo', true); return; }
 
+  const seg9 = datos.seg9;
+  delete datos.seg9;
+  const fecha = fechaSeleccionada;
   const btn = document.getElementById('btn-inicio-guardar');
   btn.disabled = true; btn.textContent = 'Guardando…';
-  enviarDato(
-    Object.assign({ action:'submitInicio', fecha: fechaSeleccionada }, datos),
-    () => {
-      btn.disabled = false; btn.textContent = 'Guardar';
-      inicioDatos = Object.assign({}, inicioDatos || {}, datos);
+
+  (async () => {
+    try {
+      if(seg9 !== undefined){
+        await enviarDatoP({ action:'submitSeguidores9', fecha, valor: parseInt(seg9, 10) });
+        seguidores9Valor = parseInt(seg9, 10);
+      }
+      if(Object.keys(datos).length){
+        await enviarDatoP(Object.assign({ action:'submitInicio', fecha }, datos));
+        inicioDatos = Object.assign({}, inicioDatos || {}, datos);
+      }
       cerrarModalInicio();
-      render();
-      actualizarBotonInicio();
       mostrarToast('Datos guardados');
       cargarListaFechas();
-    },
-    (msg) => {
-      btn.disabled = false; btn.textContent = 'Guardar';
+    } catch(msg){
       mostrarToast('No se pudo registrar' + (msg ? ': ' + msg : '.'), true);
+    } finally {
+      btn.disabled = false; btn.textContent = 'Guardar';
+      render();
+      actualizarBotonInicio();
     }
-  );
+  })();
 });
 
 /* ================= REGISTRO TÉRMINO JORNADA ================= */
-const CAMPOS_TERMINO = ['sobrantes', 'comentario'];
+const CAMPOS_TERMINO = ['seg14', 'sobrantes', 'comentario'];
 let terminoDatos = null;
 const btnTermino = document.getElementById('btn-termino');
 const modalTermino = document.getElementById('modal-termino');
@@ -1833,6 +1892,7 @@ const modalTerminoPanel = document.getElementById('modal-termino-panel');
 const MIN_1400 = 14*60;
 
 function campoTerminoLleno(k){
+  if(k === 'seg14') return seguidores14Valor !== null;
   if(!terminoDatos) return false;
   const v = terminoDatos[k];
   return v !== undefined && v !== null && String(v).trim() !== '';
@@ -1864,10 +1924,15 @@ inputSobrantes.addEventListener('click', () => {
 btnTermino.addEventListener('click', () => {
   if(fechaSeleccionada !== FECHA_HOY || terminoPendientes().length === 0) return;
   document.getElementById('modal-termino-fecha').textContent = labelDeFecha(fechaSeleccionada);
+  const inputSeg14 = document.getElementById('fin-seg14');
+  inputSeg14.value = '';
   inputSobrantes.value = '';
   document.getElementById('fin-comentario').value = '';
+  document.getElementById('grupo-seg14').style.display = campoTerminoLleno('seg14') ? 'none' : '';
   inputSobrantes.closest('.campo').style.display = campoTerminoLleno('sobrantes') ? 'none' : '';
   document.getElementById('fin-comentario').closest('.campo').style.display = campoTerminoLleno('comentario') ? 'none' : '';
+  document.getElementById('grupo-termino').style.display =
+    (campoTerminoLleno('sobrantes') && campoTerminoLleno('comentario')) ? 'none' : '';
   modalTermino.classList.add('visible');
   modalTerminoPanel.scrollTop = 0;
 });
@@ -1878,6 +1943,11 @@ modalTermino.addEventListener('click', (ev) => { if(ev.target === modalTermino) 
 
 document.getElementById('btn-termino-guardar').addEventListener('click', () => {
   const datos = {};
+  let seg14;
+  if(!campoTerminoLleno('seg14')){
+    const v = rawDesdeTexto(document.getElementById('fin-seg14').value);
+    if(v !== '') seg14 = parseInt(v, 10);
+  }
   if(!campoTerminoLleno('sobrantes')){
     const v = rawDesdeTexto(inputSobrantes.value);
     if(v !== '') datos.sobrantes = v;
@@ -1886,25 +1956,33 @@ document.getElementById('btn-termino-guardar').addEventListener('click', () => {
     const v = document.getElementById('fin-comentario').value.trim();
     if(v !== '') datos.comentario = v;
   }
-  if(Object.keys(datos).length === 0){ mostrarToast('Llena al menos un campo', true); return; }
+  if(seg14 === undefined && Object.keys(datos).length === 0){ mostrarToast('Llena al menos un campo', true); return; }
 
+  const fecha = fechaSeleccionada;
   const btn = document.getElementById('btn-termino-guardar');
   btn.disabled = true; btn.textContent = 'Guardando…';
-  enviarDato(
-    Object.assign({ action:'submitTermino', fecha: fechaSeleccionada }, datos),
-    () => {
-      btn.disabled = false; btn.textContent = 'Guardar';
-      terminoDatos = Object.assign({}, terminoDatos || {}, datos);
+
+  (async () => {
+    try {
+      if(seg14 !== undefined){
+        await enviarDatoP({ action:'submitSeguidores14', fecha, valor: seg14 });
+        seguidores14Valor = seg14;
+      }
+      if(Object.keys(datos).length){
+        await enviarDatoP(Object.assign({ action:'submitTermino', fecha }, datos));
+        terminoDatos = Object.assign({}, terminoDatos || {}, datos);
+      }
       cerrarModalTermino();
-      actualizarBotonTermino();
       mostrarToast('Datos guardados');
       cargarListaFechas();
-    },
-    (msg) => {
-      btn.disabled = false; btn.textContent = 'Guardar';
+    } catch(msg){
       mostrarToast('No se pudo registrar' + (msg ? ': ' + msg : '.'), true);
+    } finally {
+      btn.disabled = false; btn.textContent = 'Guardar';
+      render();
+      actualizarBotonTermino();
     }
-  );
+  })();
 });
 
 /* ================= SEGUIDORES (9:00 / 14:00) ================= */
@@ -1912,55 +1990,18 @@ const MIN_0850 = 8*60 + 50;
 const MIN_1350 = 13*60 + 50;
 const URL_FAMOID = 'https://famoid.com/es/contador-seguidores-instagram/';
 
-const btnReg9 = document.getElementById('btn-registrar-9');
-const btnReg14 = document.getElementById('btn-registrar-14');
-const btnConsultarSeg = document.getElementById('btn-consultar-seguidores');
-
 function minutosDesdeMedianoche(){
   const d = new Date();
   return d.getHours()*60 + d.getMinutes();
 }
 
-function actualizarVisibilidadSeguidores(){
-  const esHoy = fechaSeleccionada === FECHA_HOY;
-  btnReg9.style.display = (esHoy && seguidores9Valor === null) ? '' : 'none';
-  btnReg14.style.display = (esHoy && seguidores14Valor === null) ? '' : 'none';
-  btnConsultarSeg.style.display = (esHoy && (seguidores9Valor === null || seguidores14Valor === null)) ? '' : 'none';
-}
+// El registro de seguidores ahora está en los formularios INICIO (9.00) y TÉRMINO (14.00)
+function actualizarVisibilidadSeguidores(){}
+function actualizarParpadeoSeguidores(){}
 
-function actualizarParpadeoSeguidores(){
-  const esHoy = fechaSeleccionada === FECHA_HOY;
-  const minutos = minutosDesdeMedianoche();
-  btnReg9.classList.toggle('parpadeando', esHoy && seguidores9Valor === null && minutos >= MIN_0850);
-  btnReg14.classList.toggle('parpadeando', esHoy && seguidores14Valor === null && minutos >= MIN_1350);
-}
-setInterval(actualizarParpadeoSeguidores, 15000);
-
-btnConsultarSeg.addEventListener('click', () => window.open(URL_FAMOID, '_blank'));
-
-function registrarSeguidores(hora){
-  abrirTeclado({
-    titulo: `Seguidores ${hora}.00 hrs`,
-    decimal: false,
-    onListo: (raw) => {
-      if(raw === '') return;
-      const val = parseInt(raw, 10);
-      enviarDato(
-        {action: hora === '9' ? 'submitSeguidores9' : 'submitSeguidores14', fecha: fechaSeleccionada, valor: val},
-        () => {
-          if(hora === '9') seguidores9Valor = val; else seguidores14Valor = val;
-          render();
-          actualizarVisibilidadSeguidores();
-          actualizarParpadeoSeguidores();
-          mostrarToast('Seguidores registrados');
-        },
-        (msg) => mostrarToast('No se pudo registrar' + (msg ? ': ' + msg : '.'), true)
-      );
-    }
-  });
-}
-btnReg9.addEventListener('click', () => registrarSeguidores('9'));
-btnReg14.addEventListener('click', () => registrarSeguidores('14'));
+document.querySelectorAll('[data-consultar]').forEach(b => {
+  b.addEventListener('click', () => window.open(URL_FAMOID, '_blank'));
+});
 
 /* ================= JOYSTICK (4 direcciones diagonales) ================= */
 const pad = document.getElementById('joystick-pad');

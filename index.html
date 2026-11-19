@@ -162,6 +162,14 @@
     white-space:nowrap;
     flex-shrink:0;
   }
+  .sync-estado{
+    display:none;
+    margin-top:4px;
+    font-size:0.9rem;
+    font-weight:800;
+    color:var(--text-dim);
+  }
+  .sync-estado.visible{display:block;}
   .lata-progreso{
     height:clamp(78px, 24vw, 118px);
     width:auto;
@@ -905,6 +913,7 @@
         <rect x="14" y="30" width="3" height="76" rx="1.5" fill="rgba(255,255,255,0.75)"/>
       </svg>
     </div>
+    <div class="sync-estado" id="sync-estado"></div>
   </div>
 
   <div class="seccion-joystick">
@@ -1149,10 +1158,12 @@ const FECHA_HOY = hoyKey();
 let fechaSeleccionada = FECHA_HOY;
 
 /* ================= ESTADO ================= */
-let cuentas = { v1:0, v2:0, v3:0, v4:0 };
+let cuentas = { v1:0, v2:0, v3:0, v4:0 };          // lo que se muestra (servidor + cola local)
+let cuentasServidor = { v1:0, v2:0, v3:0, v4:0 };  // lo que confirmó la planilla
 let seguidores9Valor = null;
 let seguidores14Valor = null;
-let tramos = new Array(5).fill(0); // 9:00–14:00 en tramos de 1 hora
+let tramos = new Array(5).fill(0);          // lo que se muestra: 9:00–14:00 en tramos de 1 hora
+let tramosServidor = new Array(5).fill(0);
 let inicioDatos = null; // registro INICIO jornada de la fecha seleccionada
 
 /* ================= TOAST ================= */
@@ -1265,17 +1276,26 @@ function cargarListaFechas(){
 }
 
 /* ================= LECTURA DE DATOS (JSONP para evitar CORS) ================= */
+let seqLectura = 0;
+let ultimaLecturaAplicada = 0;
 function cargarDatos(fecha){
-  const cbName = 'cb_' + Date.now();
+  const miSeq = ++seqLectura;
+  const solicitadoEn = Date.now();
+  const cbName = 'cb_' + miSeq + '_' + solicitadoEn;
   window[cbName] = function(data){
-    if(data && !data.error){
+    // Ignorar respuestas que llegan desordenadas o de otra fecha
+    if(data && !data.error && miSeq > ultimaLecturaAplicada && fecha === fechaSeleccionada){
+      ultimaLecturaAplicada = miSeq;
       const op = data.opciones || {};
-      cuentas = { v1: op.v1 || 0, v2: op.v2 || 0, v3: op.v3 || 0, v4: op.v4 || 0 };
+      cuentasServidor = { v1: op.v1 || 0, v2: op.v2 || 0, v3: op.v3 || 0, v4: op.v4 || 0 };
+      tramosServidor = Array.isArray(data.tramos) && data.tramos.length === 5 ? data.tramos : new Array(5).fill(0);
+      // Los registros confirmados ANTES de pedir esta lectura ya vienen incluidos en la planilla
+      depurarColaConfirmada(fecha, solicitadoEn);
+      combinarConCola();
       seguidores9Valor = (data.seguidores9 === null || data.seguidores9 === undefined) ? null : data.seguidores9;
       seguidores14Valor = (data.seguidores14 === null || data.seguidores14 === undefined) ? null : data.seguidores14;
       inicioDatos = data.inicio || null;
       terminoDatos = data.termino || null;
-      tramos = Array.isArray(data.tramos) && data.tramos.length === 5 ? data.tramos : new Array(5).fill(0);
       renderTramos();
       render();
       actualizarVisibilidadSeguidores();
@@ -2011,28 +2031,120 @@ knob.addEventListener('pointercancel', () => {
   centrarKnob();
 });
 
-/* ================= REGISTRO (sin confirmación) ================= */
-function registrarOpcion(opcion){
-  enviarDato(
-    {action:'submitOpcion', fecha: fechaSeleccionada, opcion: opcion},
-    () => {
-      const op = OPCIONES_VOLT.find(o => o.id === opcion);
-      if(op) cuentas[op.key]++;
-      if(fechaSeleccionada === FECHA_HOY){
-        const ahora = new Date();
-        const idx = ahora.getHours() - 9;
-        if(idx >= 0 && idx < 5){ tramos[idx]++; renderTramos(); }
-      }
-      render();
-      mostrarToast(`Registrado: ${opcion}`);
-      cargarListaFechas();
-    },
-    (msg) => mostrarToast('No se pudo registrar' + (msg ? ': ' + msg : '.'), true)
-  );
+/* ================= REGISTRO DEL JOYSTICK: COLA LOCAL ================= */
+/*
+  Cada movimiento del joystick se suma al instante y se guarda en el
+  celular (localStorage) con un ID único. Luego se envía a la planilla y,
+  si falla la conexión, se reintenta solo. El servidor ignora IDs repetidos,
+  así que un reintento nunca cuenta doble.
+  Lo que se muestra = lo confirmado por la planilla + lo que sigue en la cola.
+  Un registro sale de la cola solo cuando llega una lectura de la planilla
+  pedida DESPUÉS de que ese registro fue confirmado (así el conteo nunca baja).
+*/
+const CLAVE_COLA = 'volt_cola_joystick_v1';
+let cola = [];
+const enVuelo = new Set();
+
+function guardarCola(){
+  try { localStorage.setItem(CLAVE_COLA, JSON.stringify(cola)); } catch(e){}
 }
+function cargarCola(){
+  try {
+    const raw = localStorage.getItem(CLAVE_COLA);
+    cola = raw ? JSON.parse(raw) : [];
+    if(!Array.isArray(cola)) cola = [];
+  } catch(e){ cola = []; }
+}
+
+function nuevoId(){
+  if(window.crypto && crypto.randomUUID) return crypto.randomUUID();
+  return 'id-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+}
+
+function tramoDe(ts){
+  const idx = new Date(ts).getHours() - 9;
+  return (idx >= 0 && idx < 5) ? idx : -1;
+}
+
+function combinarConCola(){
+  cuentas = Object.assign({}, cuentasServidor);
+  tramos = tramosServidor.slice();
+  cola.forEach(it => {
+    if(it.fecha !== fechaSeleccionada) return;
+    const op = OPCIONES_VOLT.find(o => o.id === it.opcion);
+    if(op) cuentas[op.key]++;
+    const t = tramoDe(it.ts);
+    if(t >= 0) tramos[t]++;
+  });
+  actualizarEstadoSync();
+}
+
+function depurarColaConfirmada(fecha, solicitadoEn){
+  const antes = cola.length;
+  const limite = Date.now() - 15*60*1000;
+  cola = cola.filter(it => {
+    if(!it.confirmadoEn) return true;
+    if(it.fecha === fecha && it.confirmadoEn < solicitadoEn) return false;
+    return it.confirmadoEn > limite; // resguardo: no dejar confirmados eternamente
+  });
+  if(cola.length !== antes) guardarCola();
+}
+
+function actualizarEstadoSync(){
+  const el = document.getElementById('sync-estado');
+  const pendientes = cola.filter(it => !it.confirmadoEn).length;
+  if(pendientes > 0 && !navigator.onLine){
+    el.textContent = `Sin conexión · ${formatNumero(pendientes)} por sincronizar`;
+    el.classList.add('visible');
+  } else if(pendientes >= 3){
+    el.textContent = `Sincronizando ${formatNumero(pendientes)}…`;
+    el.classList.add('visible');
+  } else {
+    el.classList.remove('visible');
+  }
+}
+
+let huboConfirmacion = false;
+function enviarCola(){
+  cola.forEach(it => {
+    if(it.confirmadoEn || enVuelo.has(it.id)) return;
+    enVuelo.add(it.id);
+    enviarDato(
+      { action:'submitOpcion', id: it.id, fecha: it.fecha, opcion: it.opcion, ts: it.ts },
+      () => {
+        enVuelo.delete(it.id);
+        it.confirmadoEn = Date.now();
+        guardarCola();
+        actualizarEstadoSync();
+        if(!huboConfirmacion){ huboConfirmacion = true; cargarListaFechas(); }
+      },
+      () => {
+        enVuelo.delete(it.id);
+        actualizarEstadoSync();
+      }
+    );
+  });
+}
+
+function registrarOpcion(opcion){
+  const item = { id: nuevoId(), fecha: fechaSeleccionada, opcion: opcion, ts: Date.now(), confirmadoEn: null };
+  cola.push(item);
+  guardarCola();
+  combinarConCola();
+  render();
+  renderTramos();
+  mostrarToast(`Registrado: ${opcion}`);
+  enviarCola();
+}
+
+cargarCola();
+setInterval(enviarCola, 5000);
+window.addEventListener('online', () => { actualizarEstadoSync(); enviarCola(); });
+window.addEventListener('offline', actualizarEstadoSync);
 
 /* ================= INICIO ================= */
 centrarKnob();
+combinarConCola();
 render();
 actualizarVisibilidadSeguidores();
 actualizarParpadeoSeguidores();
@@ -2041,6 +2153,7 @@ renderTramos();
 renderEncuesta([]);
 cargarListaFechas();
 cargarDatos(fechaSeleccionada);
+enviarCola();
 setInterval(() => cargarDatos(fechaSeleccionada), REFRESH_MS);
 </script>
 </body>

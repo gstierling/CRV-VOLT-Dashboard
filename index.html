@@ -1124,6 +1124,7 @@
 /* ================= CONFIGURACIÓN ================= */
 const ENDPOINT_URL = "https://script.google.com/macros/s/AKfycbz9al8YXJnoO3xJ9FgdH5zLhyTytNsqyv_QIbLxuI6pt_VzG4CjsMv1hl9AU2aUY7U0/exec";
 const REFRESH_MS = 30000;
+const BACKEND_ESPERADO = '2026-11-19.3'; // versión de Code.gs con la que funciona este dashboard
 const META_LATAS = 2500;
 
 const OPCIONES_VOLT = [
@@ -1276,6 +1277,7 @@ function cargarListaFechas(){
 }
 
 /* ================= LECTURA DE DATOS (JSONP para evitar CORS) ================= */
+let backendDesactualizado = false;
 let seqLectura = 0;
 let ultimaLecturaAplicada = 0;
 function cargarDatos(fecha){
@@ -1288,7 +1290,9 @@ function cargarDatos(fecha){
       ultimaLecturaAplicada = miSeq;
       const op = data.opciones || {};
       cuentasServidor = { v1: op.v1 || 0, v2: op.v2 || 0, v3: op.v3 || 0, v4: op.v4 || 0 };
-      tramosServidor = Array.isArray(data.tramos) && data.tramos.length === 5 ? data.tramos : new Array(5).fill(0);
+      // Si llega un dato de tramos inválido se conserva el anterior (la barra no desaparece)
+      if(Array.isArray(data.tramos) && data.tramos.length === 5) tramosServidor = data.tramos.map(Number);
+      backendDesactualizado = data.version !== BACKEND_ESPERADO;
       // Los registros confirmados ANTES de pedir esta lectura ya vienen incluidos en la planilla
       depurarColaConfirmada(fecha, solicitadoEn);
       combinarConCola();
@@ -2093,6 +2097,13 @@ function depurarColaConfirmada(fecha, solicitadoEn){
 function actualizarEstadoSync(){
   const el = document.getElementById('sync-estado');
   const pendientes = cola.filter(it => !it.confirmadoEn).length;
+  if(backendDesactualizado){
+    el.textContent = '⚠ El Apps Script publicado no es la última versión: pega el Code.gs nuevo y crea una nueva versión';
+    el.classList.add('visible');
+    el.style.color = 'var(--red)';
+    return;
+  }
+  el.style.color = '';
   if(pendientes > 0 && !navigator.onLine){
     el.textContent = `Sin conexión · ${formatNumero(pendientes)} por sincronizar`;
     el.classList.add('visible');

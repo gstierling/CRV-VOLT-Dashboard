@@ -162,6 +162,18 @@
     white-space:nowrap;
     flex-shrink:0;
   }
+  .lata-progreso{
+    height:clamp(78px, 24vw, 118px);
+    width:auto;
+    flex-shrink:0;
+    overflow:visible;
+  }
+  #lata-liquido{
+    transform-box:fill-box;
+    transform-origin:50% 100%;
+    transform:scaleY(0);
+    transition:transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  }
 
   /* ===== Joystick (4 opciones) ===== */
   .seccion-joystick{
@@ -854,9 +866,44 @@
 
   <div class="bloque-botellas">
     <div class="botellas-fila">
-      <h2 class="botellas-header">Latas<br>entregadas</h2>
+      <h2 class="botellas-header">LATAS<br>entregadas</h2>
       <span class="botellas-num" id="suma-total">0</span>
       <span class="botellas-pct" id="botellas-pct">(0%)</span>
+      <svg class="lata-progreso" viewBox="0 0 60 124" aria-label="Avance de la meta de latas">
+        <defs>
+          <clipPath id="lata-clip">
+            <path d="M12 16 Q12 12 16 11 L44 11 Q48 12 48 16 L50 22 L50 110 Q50 116 44 117 L16 117 Q10 116 10 110 L10 22 Z"/>
+          </clipPath>
+          <linearGradient id="lata-liq-grad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#e3a900"/>
+            <stop offset="0.45" stop-color="#ffd62e"/>
+            <stop offset="1" stop-color="#d99c00"/>
+          </linearGradient>
+        </defs>
+        <!-- cuerpo transparente -->
+        <path d="M12 16 Q12 12 16 11 L44 11 Q48 12 48 16 L50 22 L50 110 Q50 116 44 117 L16 117 Q10 116 10 110 L10 22 Z" fill="rgba(255,255,255,0.55)"/>
+        <!-- líquido -->
+        <g clip-path="url(#lata-clip)">
+          <g id="lata-liquido">
+            <rect x="8" y="11" width="44" height="107" fill="url(#lata-liq-grad)"/>
+            <circle cx="20" cy="95" r="1.6" fill="rgba(255,255,255,0.7)"/>
+            <circle cx="36" cy="80" r="1.2" fill="rgba(255,255,255,0.7)"/>
+            <circle cx="28" cy="104" r="1.4" fill="rgba(255,255,255,0.7)"/>
+            <circle cx="42" cy="98" r="1" fill="rgba(255,255,255,0.7)"/>
+          </g>
+        </g>
+        <!-- franja amarilla superior y marca -->
+        <rect x="10.6" y="22" width="38.8" height="6" fill="none" stroke="#f7c600" stroke-width="1.6"/>
+        <text x="30" y="68" transform="rotate(-90 30 68)" text-anchor="middle" dominant-baseline="central"
+              font-family="Nunito, sans-serif" font-weight="900" font-style="italic" font-size="21"
+              fill="rgba(29,63,168,0.18)" stroke="#1d3fa8" stroke-width="0.9" letter-spacing="1">VOLT</text>
+        <!-- contorno, tapa y base -->
+        <path d="M12 16 Q12 12 16 11 L44 11 Q48 12 48 16 L50 22 L50 110 Q50 116 44 117 L16 117 Q10 116 10 110 L10 22 Z" fill="none" stroke="#1d3fa8" stroke-width="2.4" stroke-linejoin="round"/>
+        <ellipse cx="30" cy="9.5" rx="15" ry="3.2" fill="rgba(255,255,255,0.8)" stroke="#1d3fa8" stroke-width="2"/>
+        <rect x="27" y="7.6" width="8" height="2.4" rx="1.2" fill="#1d3fa8"/>
+        <!-- brillo -->
+        <rect x="14" y="30" width="3" height="76" rx="1.5" fill="rgba(255,255,255,0.75)"/>
+      </svg>
     </div>
   </div>
 
@@ -1068,7 +1115,7 @@
 /* ================= CONFIGURACIÓN ================= */
 const ENDPOINT_URL = "PEGAR_AQUI_URL_APPS_SCRIPT";
 const REFRESH_MS = 30000;
-const META_LATAS = 1160; // se usa solo si aún no se registran las latas que llegaron
+const META_LATAS = 2500;
 
 const OPCIONES_VOLT = [
   { id:'Volt 1', key:'v1', color:'#1d3fa8' },
@@ -1105,7 +1152,7 @@ let fechaSeleccionada = FECHA_HOY;
 let cuentas = { v1:0, v2:0, v3:0, v4:0 };
 let seguidores9Valor = null;
 let seguidores14Valor = null;
-let tramos = new Array(10).fill(0); // 9:00–14:00 en tramos de 30 min
+let tramos = new Array(5).fill(0); // 9:00–14:00 en tramos de 1 hora
 let inicioDatos = null; // registro INICIO jornada de la fecha seleccionada
 
 /* ================= TOAST ================= */
@@ -1143,8 +1190,8 @@ function formatNumero(n){
 function render(){
   const total = cuentas.v1 + cuentas.v2 + cuentas.v3 + cuentas.v4;
   document.getElementById('suma-total').textContent = formatNumero(total);
-  const base = (inicioDatos && Number(inicioDatos.latas) > 0) ? Number(inicioDatos.latas) : META_LATAS;
-  const pct = Math.round((total / base) * 100);
+  const pct = Math.round((total / META_LATAS) * 100);
+  document.getElementById('lata-liquido').style.transform = `scaleY(${Math.min(total / META_LATAS, 1)})`;
   document.getElementById('botellas-pct').textContent = `(${pct}%)`;
 
   const maxV = Math.max(cuentas.v1, cuentas.v2, cuentas.v3, cuentas.v4, 1);
@@ -1228,7 +1275,7 @@ function cargarDatos(fecha){
       seguidores14Valor = (data.seguidores14 === null || data.seguidores14 === undefined) ? null : data.seguidores14;
       inicioDatos = data.inicio || null;
       terminoDatos = data.termino || null;
-      tramos = Array.isArray(data.tramos) && data.tramos.length === 10 ? data.tramos : new Array(10).fill(0);
+      tramos = Array.isArray(data.tramos) && data.tramos.length === 5 ? data.tramos : new Array(5).fill(0);
       renderTramos();
       render();
       actualizarVisibilidadSeguidores();
@@ -1260,14 +1307,10 @@ function enviarDato(payload, onOk, onError){
   .catch((err) => { onError && onError(err && err.message); });
 }
 
-/* ================= GRÁFICO LATAS POR MEDIA HORA ================= */
+/* ================= GRÁFICO RITMO DE ENTREGA (tramos de 1 hora) ================= */
 const ETIQUETAS_TRAMOS = [];
-for(let i = 0; i < 10; i++){
-  const m = 540 + i*30;
-  const ini = `${Math.floor(m/60)}.${String(m%60).padStart(2,'0')}`;
-  const f = m + 30;
-  const fin = `${Math.floor(f/60)}.${String(f%60).padStart(2,'0')}`;
-  ETIQUETAS_TRAMOS.push([ini, fin]);
+for(let i = 0; i < 5; i++){
+  ETIQUETAS_TRAMOS.push([`${9 + i}.00`, `${10 + i}.00`]);
 }
 
 const pluginValoresTramos = {
@@ -1308,7 +1351,7 @@ function renderTramos(){
         backgroundColor:'#1d3fa8',
         hoverBackgroundColor:'#f7c600',
         borderRadius:6,
-        maxBarThickness:42
+        maxBarThickness:64
       }]
     },
     options:{
@@ -1327,7 +1370,7 @@ function renderTramos(){
       scales:{
         x:{
           grid:{ display:false },
-          ticks:{ color:'#5b6a8f', font:{ family:'Nunito', weight:'800', size:11 }, maxRotation:0, autoSkip:false }
+          ticks:{ color:'#5b6a8f', font:{ family:'Nunito', weight:'800', size:13 }, maxRotation:0, autoSkip:false }
         },
         y:{
           beginAtZero:true,
@@ -1977,8 +2020,8 @@ function registrarOpcion(opcion){
       if(op) cuentas[op.key]++;
       if(fechaSeleccionada === FECHA_HOY){
         const ahora = new Date();
-        const idx = Math.floor((ahora.getHours()*60 + ahora.getMinutes() - 540) / 30);
-        if(idx >= 0 && idx < 10){ tramos[idx]++; renderTramos(); }
+        const idx = ahora.getHours() - 9;
+        if(idx >= 0 && idx < 5){ tramos[idx]++; renderTramos(); }
       }
       render();
       mostrarToast(`Registrado: ${opcion}`);

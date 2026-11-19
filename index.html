@@ -1,0 +1,1722 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VOLT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#eef2fb;
+    --panel:#ffffff;
+    --panel-2:#f1f4fb;
+    --teal:#1d3fa8;
+    --teal-dark:#0f2266;
+    --red:#d93a2b;
+    --red-dark:#b02d20;
+    --gold:#c99a00;
+    --amarillo-fondo:#f7c600;
+    --text:#10204f;
+    --text-dim:#5b6a8f;
+    --border:#dbe2f1;
+    --v1:#1d3fa8;
+    --v2:#f7c600;
+    --v3:#d93a2b;
+    --v4:#0f2266;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Nunito',sans-serif;
+    display:flex;
+    justify-content:center;
+    padding:16px 14px 36px;
+    overflow-x:hidden;
+  }
+  .app-container{
+    width:100%;
+    max-width:640px;
+  }
+  .title{
+    text-align:center;
+    font-size:2.6rem;
+    font-weight:900;
+    letter-spacing:2px;
+    margin:0;
+    color:var(--teal);
+  }
+  .subtitulo-app{
+    text-align:center;
+    margin:0;
+    font-size:1.5rem;
+    font-weight:700;
+    color:var(--text-dim);
+  }
+
+  /* ===== Selector de fecha ===== */
+  .selector-fecha-wrap{
+    position:relative;
+    display:flex;
+    justify-content:center;
+    margin:6px 0 14px;
+  }
+  .selector-fecha-btn{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:var(--panel);
+    border:1px solid var(--border);
+    color:var(--text-dim);
+    font-family:'Nunito',sans-serif;
+    font-weight:700;
+    font-size:1.05rem;
+    padding:9px 16px;
+    border-radius:12px;
+    cursor:pointer;
+    text-transform:capitalize;
+    transition:border-color 0.15s ease;
+    box-shadow:0 1px 3px rgba(16,34,102,0.08);
+  }
+  .selector-fecha-btn:hover{border-color:var(--teal);}
+  .selector-fecha-btn .flecha{
+    width:16px;height:16px;color:var(--red);
+    flex-shrink:0;
+    transition:transform 0.15s ease;
+  }
+  .selector-fecha-wrap.abierto .flecha{transform:rotate(180deg);}
+  .selector-fecha-lista{
+    display:none;
+    position:absolute;
+    top:calc(100% + 6px);
+    left:50%;
+    transform:translateX(-50%);
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:12px;
+    min-width:max-content;
+    width:max-content;
+    max-width:90vw;
+    max-height:260px;
+    overflow-y:auto;
+    z-index:40;
+    box-shadow:0 12px 28px rgba(16,34,102,0.18);
+  }
+  .selector-fecha-wrap.abierto .selector-fecha-lista{display:block;}
+  .opcion-fecha{
+    padding:11px 16px;
+    font-weight:600;
+    font-size:0.98rem;
+    color:var(--text);
+    cursor:pointer;
+    text-transform:capitalize;
+    border-bottom:1px solid var(--border);
+    white-space:nowrap;
+  }
+  .opcion-fecha:last-child{border-bottom:none;}
+  .opcion-fecha:hover{background:var(--panel-2);}
+  .opcion-fecha.activa{color:var(--teal); font-weight:800;}
+
+  /* ===== Botellas entregadas ===== */
+  .bloque-botellas{
+    text-align:center;
+    margin:4px 0 16px;
+    width:100vw;
+    position:relative;
+    left:50%;
+    right:50%;
+    margin-left:-50vw;
+    margin-right:-50vw;
+    padding:0 8px;
+  }
+  .botellas-header{
+    font-size:clamp(1.3rem, 6vw, 2rem);
+    font-weight:900;
+    line-height:1.02;
+    color:var(--teal);
+    margin:0;
+    text-align:right;
+    flex-shrink:0;
+  }
+  .botellas-fila{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-wrap:nowrap;
+    gap:clamp(10px, 3.2vw, 20px);
+  }
+  .botellas-num{
+    font-size:clamp(2.8rem, 13vw, 4.8rem);
+    font-weight:900;
+    color:var(--teal-dark);
+    line-height:0.95;
+    white-space:nowrap;
+    flex-shrink:0;
+  }
+  .botellas-pct{
+    font-size:clamp(1rem, 4vw, 1.5rem);
+    font-weight:800;
+    color:var(--text-dim);
+    white-space:nowrap;
+    flex-shrink:0;
+  }
+
+  /* ===== Joystick (4 opciones) ===== */
+  .seccion-joystick{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:18px;
+    padding:20px 16px 24px;
+    text-align:center;
+    box-shadow:0 2px 10px rgba(16,34,102,0.06);
+  }
+  .joystick-full-bleed{
+    width:100vw;
+    position:relative;
+    left:50%;
+    right:50%;
+    margin-left:-50vw;
+    margin-right:-50vw;
+    margin-bottom:22px;
+  }
+  .joystick-pad{
+    position:relative;
+    width:100%;
+    aspect-ratio:1/1;
+    margin:0 auto;
+    overflow:visible;
+    background:
+      linear-gradient(to right, var(--v1) 50%, var(--v2) 50%) top / 100% 50% no-repeat,
+      linear-gradient(to right, var(--v3) 50%, var(--v4) 50%) bottom / 100% 50% no-repeat;
+    box-shadow:inset 0 0 0 2px rgba(0,0,0,0.06);
+    touch-action:pan-y;
+  }
+  .rayo-fondo{
+    position:absolute;
+    font-size:min(28vw, 140px);
+    line-height:1;
+    transform:translate(-50%,-50%);
+    opacity:0.35;
+    z-index:0;
+    pointer-events:none;
+  }
+  .rayo-1{top:25%; left:25%;}
+  .rayo-2{top:25%; left:75%;}
+  .rayo-3{top:75%; left:25%;}
+  .rayo-4{top:75%; left:75%;}
+  .joystick-conteo{
+    position:absolute;
+    font-size:clamp(1.6rem, 7vw, 2.6rem);
+    font-weight:900;
+    line-height:1;
+    z-index:4;
+    pointer-events:none;
+  }
+  .conteo-v1{top:4%; left:47%; transform:translate(-100%,0); color:#ffffff; text-shadow:0 2px 6px rgba(0,0,0,0.4);}
+  .conteo-v2{top:4%; left:53%; color:var(--teal-dark);}
+  .conteo-v3{bottom:4%; left:47%; transform:translate(-100%,0); color:#ffffff; text-shadow:0 2px 6px rgba(0,0,0,0.4);}
+  .conteo-v4{bottom:4%; left:53%; color:#ffffff; text-shadow:0 2px 6px rgba(0,0,0,0.4);}
+  .joystick-svg{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    z-index:1;
+  }
+  .zona{
+    position:absolute;
+    transform:translate(-50%,-50%);
+    font-weight:900;
+    font-size:1.05rem;
+    letter-spacing:0.2px;
+    line-height:1.15;
+    pointer-events:none;
+    white-space:nowrap;
+    z-index:2;
+    color:var(--text);
+    background:rgba(255,255,255,0.92);
+    padding:9px 12px;
+    border-radius:12px;
+    box-shadow:0 3px 10px rgba(0,0,0,0.18);
+    text-align:center;
+  }
+  .zona-up-left{top:15%; left:17%;}
+  .zona-up-right{top:15%; left:83%;}
+  .zona-down-left{top:85%; left:17%;}
+  .zona-down-right{top:85%; left:83%;}
+
+  .joystick-knob{
+    position:absolute;
+    top:50%;
+    left:50%;
+    width:66px;
+    height:66px;
+    border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #3a63d8, var(--teal-dark));
+    border:3px solid var(--amarillo-fondo);
+    box-shadow:0 6px 18px rgba(0,0,0,0.35);
+    cursor:grab;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    touch-action:none;
+    transition:box-shadow 0.15s ease;
+    z-index:3;
+  }
+  .joystick-knob.activo{
+    cursor:grabbing;
+    box-shadow:0 8px 22px rgba(0,0,0,0.45);
+  }
+  .joystick-knob svg{width:38px; height:38px;}
+
+  /* ===== Barras Volt 1–4 ===== */
+  .barras-fruta{
+    max-width:420px;
+    margin:0 auto;
+  }
+  .barra-fila{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:12px;
+  }
+  .barra-fila:last-child{margin-bottom:0;}
+  .barra-etiqueta{
+    width:64px;
+    text-align:left;
+    flex-shrink:0;
+    font-weight:900;
+    font-size:1.05rem;
+    white-space:nowrap;
+  }
+  .barra-track{
+    flex:1;
+    height:20px;
+    background:var(--panel-2);
+    border-radius:10px;
+    overflow:hidden;
+    border:1px solid var(--border);
+  }
+  .barra-fill{
+    height:100%;
+    width:0%;
+    border-radius:10px;
+    transition:width 0.4s ease;
+  }
+  .barra-valor{
+    min-width:40px;
+    text-align:right;
+    font-weight:900;
+    font-size:1.1rem;
+    flex-shrink:0;
+  }
+
+  hr.sep{
+    border:none;
+    border-top:1px solid var(--border);
+    margin:18px 0;
+  }
+
+  /* ===== Registro INICIO jornada ===== */
+  .bloque-inicio{
+    display:flex;
+    justify-content:center;
+    margin:0 0 16px;
+  }
+  .btn-inicio{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    width:100%;
+    background:var(--teal);
+    color:#ffffff;
+    border:none;
+    border-radius:14px;
+    padding:14px 16px;
+    font-family:'Nunito',sans-serif;
+    font-weight:900;
+    font-size:clamp(1rem, 4.6vw, 1.2rem);
+    cursor:pointer;
+    box-shadow:0 4px 14px rgba(16,34,102,0.25);
+  }
+  .btn-inicio .manito{font-size:1.2rem; line-height:1;}
+  .btn-inicio.registrado{
+    background:var(--panel);
+    color:var(--teal);
+    border:2px solid var(--teal);
+    box-shadow:none;
+  }
+  @keyframes parpadeoInicio{
+    0%, 100%{ box-shadow:0 0 0 0 rgba(247,198,0,0); }
+    50%{ box-shadow:0 0 0 7px rgba(247,198,0,0.55); }
+  }
+  .btn-inicio.parpadeando{animation:parpadeoInicio 1.1s ease-in-out infinite;}
+
+  .modal-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(15,34,102,0.45);
+    z-index:65;
+    display:none;
+    align-items:flex-end;
+    justify-content:center;
+  }
+  .modal-overlay.visible{display:flex;}
+  .modal-panel{
+    width:100%;
+    max-width:640px;
+    max-height:94vh;
+    overflow-y:auto;
+    background:var(--bg);
+    border-radius:22px 22px 0 0;
+    padding:18px 16px calc(20px + env(safe-area-inset-bottom));
+    box-shadow:0 -10px 30px rgba(0,0,0,0.25);
+  }
+  .modal-titulo{
+    margin:0 0 4px;
+    text-align:center;
+    font-size:1.6rem;
+    font-weight:900;
+    color:var(--teal);
+  }
+  .modal-sub{
+    margin:0 0 14px;
+    text-align:center;
+    font-weight:700;
+    color:var(--text-dim);
+  }
+  .form-grupo{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:14px;
+    margin-bottom:12px;
+  }
+  .form-grupo-titulo{
+    margin:0 0 10px;
+    font-size:1.15rem;
+    font-weight:900;
+    color:var(--teal-dark);
+  }
+  .campo{margin-bottom:12px;}
+  .campo:last-child{margin-bottom:0;}
+  .campo label{
+    display:block;
+    font-weight:800;
+    font-size:1rem;
+    margin-bottom:6px;
+    color:var(--text);
+  }
+  .campo .opcional{font-weight:600; color:var(--text-dim); font-size:0.85rem;}
+  .campo input{
+    width:100%;
+    background:var(--panel-2);
+    border:2px solid var(--border);
+    border-radius:10px;
+    color:var(--text);
+    font-family:'Nunito',sans-serif;
+    font-size:1.1rem;
+    font-weight:700;
+    padding:11px 12px;
+    outline:none;
+  }
+  .campo input:focus, .campo input.enfocado{border-color:var(--teal);}
+  .campo input.num{cursor:pointer; caret-color:transparent; text-align:center; font-size:1.3rem; font-weight:900;}
+  .campos-2col{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+  }
+  .campos-2col .campo{margin-bottom:0;}
+  .modal-acciones{
+    display:flex;
+    gap:10px;
+    margin-top:6px;
+  }
+  .btn-modal{
+    flex:1;
+    border:none;
+    border-radius:12px;
+    padding:14px 10px;
+    font-family:'Nunito',sans-serif;
+    font-weight:900;
+    font-size:1.05rem;
+    cursor:pointer;
+  }
+  .btn-modal-cancelar{background:var(--panel); color:var(--text-dim); border:2px solid var(--border);}
+  .btn-modal-guardar{background:var(--amarillo-fondo); color:var(--teal-dark);}
+  .modal-panel.solo-lectura .campo input{pointer-events:none; background:var(--panel);}
+  .modal-panel.solo-lectura .btn-modal-guardar{display:none;}
+
+  /* ===== Seguidores ===== */
+  .btn-consultar{
+    background:var(--teal);
+    color:#ffffff;
+    border:none;
+    border-radius:10px;
+    padding:10px 18px;
+    font-family:'Nunito',sans-serif;
+    font-weight:800;
+    font-size:0.9rem;
+    cursor:pointer;
+    margin-top:14px;
+  }
+  .btn-consultar:hover{filter:brightness(1.1);}
+  .btn-registrar-seg{
+    margin-top:6px;
+    background:var(--amarillo-fondo);
+    color:var(--teal-dark);
+    border:none;
+    border-radius:10px;
+    padding:8px 12px;
+    font-family:'Nunito',sans-serif;
+    font-weight:900;
+    font-size:0.9rem;
+    cursor:pointer;
+  }
+  @keyframes parpadeoSeguidores{
+    0%, 100%{ opacity:1; box-shadow:0 0 0 0 rgba(217,58,43,0); }
+    50%{ opacity:0.5; box-shadow:0 0 0 6px rgba(217,58,43,0.3); }
+  }
+  .btn-registrar-seg.parpadeando{animation:parpadeoSeguidores 1s ease-in-out infinite;}
+
+  /* ===== Teclado numérico propio ===== */
+  .teclado-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(13,66,56,0.35);
+    z-index:70;
+    display:none;
+    align-items:flex-end;
+    justify-content:center;
+  }
+  .teclado-overlay.visible{display:flex;}
+  .teclado{
+    width:100%;
+    max-width:520px;
+    background:var(--panel);
+    border-radius:22px 22px 0 0;
+    padding:16px 14px calc(18px + env(safe-area-inset-bottom));
+    box-shadow:0 -10px 30px rgba(0,0,0,0.2);
+  }
+  .teclado-display{
+    text-align:center;
+    font-size:2.4rem;
+    font-weight:900;
+    color:var(--teal-dark);
+    background:var(--panel-2);
+    border:2px solid var(--border);
+    border-radius:14px;
+    padding:10px 12px;
+    margin-bottom:14px;
+    min-height:68px;
+    word-break:break-all;
+  }
+  .teclado-display.vacio{color:var(--text-dim); font-size:1.3rem; display:flex; align-items:center; justify-content:center;}
+  .teclado-grid{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:10px;
+  }
+  .tecla{
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    border-radius:14px;
+    font-family:'Nunito',sans-serif;
+    font-size:1.9rem;
+    font-weight:900;
+    color:var(--text);
+    padding:14px 0;
+    cursor:pointer;
+    user-select:none;
+  }
+  .tecla:active{background:var(--border);}
+  .tecla-borrar{color:var(--red);}
+  .tecla-ok{
+    grid-column:1 / -1;
+    background:var(--teal);
+    color:#ffffff;
+    border:none;
+    font-size:1.3rem;
+    padding:16px 0;
+  }
+  .tecla-deshabilitada{visibility:hidden;}
+
+  /* ===== Resultado seguidores (final) ===== */
+  .seccion-resultado-seguidores{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:18px;
+    padding:18px 16px;
+    text-align:center;
+    box-shadow:0 2px 10px rgba(16,34,102,0.06);
+    margin-top:16px;
+  }
+  .seguidores-titulo{
+    margin:0 0 12px;
+    font-size:1.95rem;
+    font-weight:900;
+    color:var(--teal);
+  }
+  .resultado-seguidores-fila{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:8px;
+  }
+  .resultado-seguidores-item{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    min-width:0;
+    background:var(--panel-2);
+    border-radius:14px;
+    padding:10px 4px;
+  }
+  .resultado-seguidores-titulo{
+    font-size:clamp(0.8rem, 3.6vw, 1rem);
+    font-weight:800;
+    color:var(--text-dim);
+    margin-bottom:4px;
+    white-space:nowrap;
+  }
+  .resultado-seguidores-num{
+    font-size:clamp(1.3rem, 6.4vw, 2rem);
+    font-weight:900;
+    color:var(--teal-dark);
+    line-height:1.1;
+  }
+  .resultado-seguidores-ganados{background:var(--amarillo-fondo);}
+  .resultado-seguidores-ganados .resultado-seguidores-titulo{color:var(--teal-dark);}
+  .resultado-seguidores-ganados .resultado-seguidores-num{color:var(--teal);}
+
+  /* ===== Encuesta rápida ===== */
+  .seccion-encuesta{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:18px;
+    padding:18px 16px;
+    text-align:center;
+    box-shadow:0 2px 10px rgba(16,34,102,0.06);
+    margin-top:16px;
+  }
+  .encuesta-header{
+    font-weight:900;
+    font-size:1.95rem;
+    margin:0 0 14px;
+    color:var(--teal);
+  }
+  .encuesta-pregunta-bloque{
+    margin-bottom:18px;
+    text-align:left;
+  }
+  .encuesta-pregunta{
+    font-weight:800;
+    font-size:1.14rem;
+    margin:0 0 8px;
+    color:var(--text);
+  }
+  .encuesta-input{
+    width:100%;
+    background:var(--panel-2);
+    border:2px solid var(--border);
+    border-radius:10px;
+    color:var(--text);
+    font-family:'Nunito',sans-serif;
+    font-size:1rem;
+    font-weight:600;
+    padding:10px 12px;
+    outline:none;
+  }
+  .encuesta-input:focus{border-color:var(--teal);}
+  .opciones-encuesta{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  .opcion-encuesta{
+    flex:1 1 auto;
+    background:var(--panel-2);
+    border:2px solid var(--border);
+    border-radius:10px;
+    color:var(--text);
+    font-family:'Nunito',sans-serif;
+    font-size:1rem;
+    font-weight:800;
+    padding:11px 14px;
+    cursor:pointer;
+    transition:background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  }
+  .opcion-encuesta.seleccionada{
+    background:var(--teal);
+    border-color:var(--teal);
+    color:#ffffff;
+  }
+  #input-encuesta-3-otra{
+    margin-top:8px;
+    display:none;
+  }
+  #input-encuesta-3-otra.visible{display:block;}
+  .btn-enviar-encuesta{
+    background:var(--amarillo-fondo);
+    color:var(--teal-dark);
+    border:none;
+    border-radius:10px;
+    padding:12px 26px;
+    font-family:'Nunito',sans-serif;
+    font-weight:800;
+    font-size:0.98rem;
+    cursor:pointer;
+    margin-top:4px;
+  }
+  .btn-enviar-encuesta:hover{filter:brightness(1.1);}
+
+  /* ===== Gráficas de la encuesta (donut) ===== */
+  .seccion-graficos-encuesta{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:16px;
+    margin-top:16px;
+  }
+  @media (min-width:600px){
+    .seccion-graficos-encuesta{grid-template-columns:1fr 1fr;}
+  }
+  .grafico-bloque{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:18px;
+    padding:16px 14px 18px;
+    text-align:center;
+    box-shadow:0 2px 10px rgba(16,34,102,0.06);
+  }
+  .grafico-titulo{
+    font-weight:800;
+    font-size:clamp(1.5rem, 6.5vw, 2rem);
+    margin:0 0 12px;
+    color:var(--text);
+  }
+  @media (min-width:600px){
+    .grafico-titulo{font-size:1.45rem;}
+  }
+  .grafico-donut-wrap{
+    position:relative;
+    width:100%;
+    max-width:230px;
+    aspect-ratio:1/1;
+    margin:0 auto 14px;
+  }
+  .grafico-sin-datos{
+    display:none;
+    position:absolute;
+    inset:0;
+    align-items:center;
+    justify-content:center;
+    margin:0;
+    font-size:0.85rem;
+    font-weight:700;
+    color:var(--text-dim);
+  }
+  .grafico-sin-datos.visible{display:flex;}
+  .grafico-leyenda{
+    list-style:none;
+    margin:0;
+    padding:0;
+    text-align:left;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .leyenda-item{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:0.9rem;
+  }
+  .leyenda-dot{
+    width:12px;
+    height:12px;
+    border-radius:3px;
+    flex-shrink:0;
+  }
+  .leyenda-label{
+    flex:1;
+    font-weight:700;
+    color:var(--text);
+  }
+  .leyenda-valor{
+    font-weight:900;
+    color:var(--text-dim);
+    white-space:nowrap;
+  }
+
+  .toast{
+    position:fixed;
+    bottom:22px;
+    left:50%;
+    transform:translateX(-50%) translateY(20px);
+    background:var(--panel);
+    border:1px solid var(--border);
+    color:var(--text);
+    padding:12px 20px;
+    border-radius:12px;
+    font-weight:700;
+    opacity:0;
+    transition:opacity 0.25s ease, transform 0.25s ease;
+    z-index:80;
+    pointer-events:none;
+    box-shadow:0 6px 18px rgba(16,34,102,0.15);
+    max-width:88vw;
+    text-align:center;
+  }
+  .toast.mostrar{
+    opacity:1;
+    transform:translateX(-50%) translateY(0);
+  }
+  .toast.error{border-color:var(--red); color:var(--red);}
+</style>
+</head>
+<body>
+
+<div class="app-container">
+  <h1 class="title">VOLT</h1>
+  <p class="subtitulo-app">en CicloRecreoVía</p>
+
+  <div class="selector-fecha-wrap" id="selector-fecha-wrap">
+    <button class="selector-fecha-btn" id="selector-fecha-btn" type="button">
+      <span id="selector-fecha-label">Cargando fechas…</span>
+      <svg class="flecha" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div class="selector-fecha-lista" id="selector-fecha-lista"></div>
+  </div>
+
+  <div class="bloque-inicio">
+    <button class="btn-inicio" id="btn-inicio" type="button">
+      <span class="manito">👉</span>
+      <span id="btn-inicio-label">Registro INICIO jornada</span>
+    </button>
+  </div>
+
+  <div class="bloque-botellas">
+    <div class="botellas-fila">
+      <h2 class="botellas-header">Latas<br>entregadas</h2>
+      <span class="botellas-num" id="suma-total">0</span>
+      <span class="botellas-pct" id="botellas-pct">(0%)</span>
+    </div>
+  </div>
+
+  <div class="seccion-joystick">
+    <div class="joystick-full-bleed">
+      <div class="joystick-pad" id="joystick-pad">
+        <span class="rayo-fondo rayo-1">⚡</span>
+        <span class="rayo-fondo rayo-2">⚡</span>
+        <span class="rayo-fondo rayo-3">⚡</span>
+        <span class="rayo-fondo rayo-4">⚡</span>
+
+        <div class="joystick-conteo conteo-v1" id="joystick-conteo-v1">0</div>
+        <div class="joystick-conteo conteo-v2" id="joystick-conteo-v2">0</div>
+        <div class="joystick-conteo conteo-v3" id="joystick-conteo-v3">0</div>
+        <div class="joystick-conteo conteo-v4" id="joystick-conteo-v4">0</div>
+
+        <svg class="joystick-svg" viewBox="0 0 300 300" preserveAspectRatio="none">
+          <line x1="150" y1="150" x2="68.7" y2="68.7" stroke="rgba(255,255,255,0.4)" stroke-width="26" stroke-linecap="round"/>
+          <line x1="150" y1="150" x2="231.3" y2="68.7" stroke="rgba(255,255,255,0.4)" stroke-width="26" stroke-linecap="round"/>
+          <line x1="150" y1="150" x2="68.7" y2="231.3" stroke="rgba(255,255,255,0.4)" stroke-width="26" stroke-linecap="round"/>
+          <line x1="150" y1="150" x2="231.3" y2="231.3" stroke="rgba(255,255,255,0.4)" stroke-width="26" stroke-linecap="round"/>
+        </svg>
+
+        <div class="zona zona-up-left">Volt 1</div>
+        <div class="zona zona-up-right">Volt 2</div>
+        <div class="zona zona-down-left">Volt 3</div>
+        <div class="zona zona-down-right">Volt 4</div>
+
+        <div class="joystick-knob" id="joystick-knob">
+          <svg viewBox="0 0 24 24" fill="none">
+            <line x1="9.88" y1="9.88" x2="4.93" y2="4.93" stroke="#ffffff" stroke-width="4.6" stroke-linecap="round"/>
+            <line x1="14.12" y1="9.88" x2="19.07" y2="4.93" stroke="#ffffff" stroke-width="4.6" stroke-linecap="round"/>
+            <line x1="9.88" y1="14.12" x2="4.93" y2="19.07" stroke="#ffffff" stroke-width="4.6" stroke-linecap="round"/>
+            <line x1="14.12" y1="14.12" x2="19.07" y2="19.07" stroke="#ffffff" stroke-width="4.6" stroke-linecap="round"/>
+            <circle cx="12" cy="12" r="2.6" fill="#ffffff"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="barras-fruta" id="barras-volt"></div>
+  </div>
+
+  <div class="seccion-resultado-seguidores">
+    <h2 class="seguidores-titulo">Seguidores</h2>
+    <div class="resultado-seguidores-fila">
+      <div class="resultado-seguidores-item">
+        <span class="resultado-seguidores-titulo">A las 9.00 hrs</span>
+        <span class="resultado-seguidores-num" id="resultado-seguidores-9">—</span>
+        <button class="btn-registrar-seg" id="btn-registrar-9" type="button" style="display:none;">Registrar</button>
+      </div>
+      <div class="resultado-seguidores-item">
+        <span class="resultado-seguidores-titulo">A las 14.00 hrs</span>
+        <span class="resultado-seguidores-num" id="resultado-seguidores-14">—</span>
+        <button class="btn-registrar-seg" id="btn-registrar-14" type="button" style="display:none;">Registrar</button>
+      </div>
+      <div class="resultado-seguidores-item resultado-seguidores-ganados">
+        <span class="resultado-seguidores-titulo">Ganados</span>
+        <span class="resultado-seguidores-num" id="resultado-seguidores-ganados">—</span>
+      </div>
+    </div>
+    <button class="btn-consultar" id="btn-consultar-seguidores" type="button" style="display:none;">Consultar seguidores</button>
+  </div>
+
+  <div class="seccion-encuesta">
+    <h2 class="encuesta-header">Encuesta rápida</h2>
+
+    <div class="encuesta-pregunta-bloque">
+      <p class="encuesta-pregunta">1. ¿Cómo describirías Volt en una palabra?</p>
+      <input class="encuesta-input" id="input-encuesta-1" type="text" placeholder="Una palabra" maxlength="40">
+    </div>
+
+    <div class="encuesta-pregunta-bloque">
+      <p class="encuesta-pregunta">2. ¿Conocías Volt antes de hoy?</p>
+      <div class="opciones-encuesta" data-pregunta="2"></div>
+    </div>
+
+    <div class="encuesta-pregunta-bloque">
+      <p class="encuesta-pregunta">3. ¿Qué bebida energética tomas habitualmente?</p>
+      <div class="opciones-encuesta" data-pregunta="3"></div>
+      <input class="encuesta-input" id="input-encuesta-3-otra" type="text" placeholder="¿Cuál?" maxlength="40">
+    </div>
+
+    <div class="encuesta-pregunta-bloque">
+      <p class="encuesta-pregunta">4. Después de probarlo, ¿lo comprarías?</p>
+      <div class="opciones-encuesta" data-pregunta="4"></div>
+    </div>
+
+    <button class="btn-enviar-encuesta" id="btn-enviar-encuesta" type="button">Enviar respuestas</button>
+  </div>
+
+  <div class="seccion-graficos-encuesta">
+    <div class="grafico-bloque">
+      <h3 class="grafico-titulo">Volt en una palabra</h3>
+      <div class="grafico-donut-wrap">
+        <canvas id="chart-encuesta-1"></canvas>
+        <p class="grafico-sin-datos" id="sin-datos-1">Aún no hay respuestas</p>
+      </div>
+      <ul class="grafico-leyenda" id="leyenda-encuesta-1"></ul>
+    </div>
+    <div class="grafico-bloque">
+      <h3 class="grafico-titulo">¿Conocían Volt?</h3>
+      <div class="grafico-donut-wrap">
+        <canvas id="chart-encuesta-2"></canvas>
+        <p class="grafico-sin-datos" id="sin-datos-2">Aún no hay respuestas</p>
+      </div>
+      <ul class="grafico-leyenda" id="leyenda-encuesta-2"></ul>
+    </div>
+    <div class="grafico-bloque">
+      <h3 class="grafico-titulo">Bebida energética habitual</h3>
+      <div class="grafico-donut-wrap">
+        <canvas id="chart-encuesta-3"></canvas>
+        <p class="grafico-sin-datos" id="sin-datos-3">Aún no hay respuestas</p>
+      </div>
+      <ul class="grafico-leyenda" id="leyenda-encuesta-3"></ul>
+    </div>
+    <div class="grafico-bloque">
+      <h3 class="grafico-titulo">¿Lo comprarían?</h3>
+      <div class="grafico-donut-wrap">
+        <canvas id="chart-encuesta-4"></canvas>
+        <p class="grafico-sin-datos" id="sin-datos-4">Aún no hay respuestas</p>
+      </div>
+      <ul class="grafico-leyenda" id="leyenda-encuesta-4"></ul>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-inicio">
+  <div class="modal-panel" id="modal-inicio-panel">
+    <h2 class="modal-titulo">Registro INICIO jornada</h2>
+    <p class="modal-sub" id="modal-inicio-fecha"></p>
+
+    <div class="form-grupo">
+      <div class="campo">
+        <label for="ini-ubicacion">Ubicación del punto</label>
+        <input id="ini-ubicacion" type="text" maxlength="80" placeholder="Ej: Av. Providencia con Los Leones">
+      </div>
+      <div class="campos-2col">
+        <div class="campo">
+          <label for="ini-latas">Latas que llegaron</label>
+          <input class="num" id="ini-latas" type="text" readonly inputmode="none" placeholder="—" data-decimal="0" data-titulo="Latas que llegaron">
+        </div>
+        <div class="campo">
+          <label for="ini-cavas">Cavas que llegaron</label>
+          <input class="num" id="ini-cavas" type="text" readonly inputmode="none" placeholder="—" data-decimal="0" data-titulo="Cavas que llegaron">
+        </div>
+        <div class="campo">
+          <label for="ini-hielo">Hielo que llegó</label>
+          <input class="num" id="ini-hielo" type="text" readonly inputmode="none" placeholder="—" data-decimal="1" data-titulo="Hielo que llegó">
+        </div>
+        <div class="campo">
+          <label for="ini-agua">Agua que llegó a terreno</label>
+          <input class="num" id="ini-agua" type="text" readonly inputmode="none" placeholder="—" data-decimal="1" data-titulo="Agua que llegó a terreno">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-grupo">
+      <h3 class="form-grupo-titulo">Personal</h3>
+      <div id="campos-personal"></div>
+    </div>
+
+    <div class="modal-acciones">
+      <button class="btn-modal btn-modal-cancelar" id="btn-inicio-cancelar" type="button">Cerrar</button>
+      <button class="btn-modal btn-modal-guardar" id="btn-inicio-guardar" type="button">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="teclado-overlay" id="teclado-overlay">
+  <div class="teclado" id="teclado">
+    <div class="teclado-display vacio" id="teclado-display">N° seguidores</div>
+    <div class="teclado-grid" id="teclado-grid"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+/* ================= CONFIGURACIÓN ================= */
+const ENDPOINT_URL = "PEGAR_AQUI_URL_APPS_SCRIPT";
+const REFRESH_MS = 30000;
+const META_LATAS = 1160; // se usa solo si aún no se registran las latas que llegaron
+
+const OPCIONES_VOLT = [
+  { id:'Volt 1', key:'v1', color:'#1d3fa8' },
+  { id:'Volt 2', key:'v2', color:'#f7c600' },
+  { id:'Volt 3', key:'v3', color:'#d93a2b' },
+  { id:'Volt 4', key:'v4', color:'#0f2266' }
+];
+
+/* ================= FECHAS ================= */
+const MESES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+const DIAS = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
+
+function hoyKey(){
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  const dd = String(d.getDate()).padStart(2,'0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function labelDeFecha(key){
+  const [y,m,d] = key.split('-').map(Number);
+  const dateObj = new Date(y, m-1, d);
+  const dia = DIAS[dateObj.getDay()];
+  const diaCap = dia.charAt(0).toUpperCase() + dia.slice(1);
+  const mesCap = MESES[m-1].charAt(0).toUpperCase() + MESES[m-1].slice(1);
+  return `${diaCap} ${d} ${mesCap}`;
+}
+
+const FECHA_HOY = hoyKey();
+let fechaSeleccionada = FECHA_HOY;
+
+/* ================= ESTADO ================= */
+let cuentas = { v1:0, v2:0, v3:0, v4:0 };
+let seguidores9Valor = null;
+let seguidores14Valor = null;
+let inicioDatos = null; // registro INICIO jornada de la fecha seleccionada
+
+/* ================= TOAST ================= */
+let toastTimer;
+function mostrarToast(msg, esError){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.toggle('error', !!esError);
+  t.classList.add('mostrar');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=> t.classList.remove('mostrar'), 3200);
+}
+
+/* ================= FORMATO NUMÉRICO ================= */
+const FORMATO_MILES = new Intl.NumberFormat('es-CL');
+function formatNumero(n){
+  return FORMATO_MILES.format(n);
+}
+
+/* ================= BARRAS VOLT ================= */
+(function construirBarras(){
+  const cont = document.getElementById('barras-volt');
+  OPCIONES_VOLT.forEach(op => {
+    const fila = document.createElement('div');
+    fila.className = 'barra-fila';
+    fila.innerHTML = `
+      <span class="barra-etiqueta" style="color:${op.key === 'v2' ? '#b08d00' : op.color}">${op.id}</span>
+      <div class="barra-track"><div class="barra-fill" id="barra-${op.key}" style="background:${op.color}"></div></div>
+      <span class="barra-valor" id="conteo-${op.key}">0</span>`;
+    cont.appendChild(fila);
+  });
+})();
+
+/* ================= RENDER ================= */
+function render(){
+  const total = cuentas.v1 + cuentas.v2 + cuentas.v3 + cuentas.v4;
+  document.getElementById('suma-total').textContent = formatNumero(total);
+  const base = (inicioDatos && Number(inicioDatos.latas) > 0) ? Number(inicioDatos.latas) : META_LATAS;
+  const pct = Math.round((total / base) * 100);
+  document.getElementById('botellas-pct').textContent = `(${pct}%)`;
+
+  const maxV = Math.max(cuentas.v1, cuentas.v2, cuentas.v3, cuentas.v4, 1);
+  OPCIONES_VOLT.forEach(op => {
+    document.getElementById('joystick-conteo-' + op.key).textContent = formatNumero(cuentas[op.key]);
+    document.getElementById('conteo-' + op.key).textContent = formatNumero(cuentas[op.key]);
+    document.getElementById('barra-' + op.key).style.width = (cuentas[op.key]/maxV*100) + '%';
+  });
+
+  document.getElementById('resultado-seguidores-9').textContent = seguidores9Valor !== null ? formatNumero(seguidores9Valor) : '—';
+  document.getElementById('resultado-seguidores-14').textContent = seguidores14Valor !== null ? formatNumero(seguidores14Valor) : '—';
+  const ganadosEl = document.getElementById('resultado-seguidores-ganados');
+  if(seguidores9Valor !== null && seguidores14Valor !== null){
+    ganadosEl.textContent = formatNumero(seguidores14Valor - seguidores9Valor);
+  } else {
+    ganadosEl.textContent = '—';
+  }
+}
+
+/* ================= SELECTOR DE FECHA ================= */
+const wrapFecha = document.getElementById('selector-fecha-wrap');
+const btnFecha = document.getElementById('selector-fecha-btn');
+const labelFecha = document.getElementById('selector-fecha-label');
+const listaFecha = document.getElementById('selector-fecha-lista');
+
+btnFecha.addEventListener('click', () => {
+  wrapFecha.classList.toggle('abierto');
+});
+document.addEventListener('click', (ev) => {
+  if(!wrapFecha.contains(ev.target)) wrapFecha.classList.remove('abierto');
+});
+
+function pintarListaFechas(fechas){
+  listaFecha.innerHTML = '';
+  fechas.forEach(key => {
+    const opt = document.createElement('div');
+    opt.className = 'opcion-fecha' + (key === fechaSeleccionada ? ' activa' : '');
+    opt.textContent = labelDeFecha(key) + (key === FECHA_HOY ? ' (hoy)' : '');
+    opt.addEventListener('click', () => {
+      fechaSeleccionada = key;
+      wrapFecha.classList.remove('abierto');
+      labelFecha.textContent = labelDeFecha(key) + (key === FECHA_HOY ? ' (hoy)' : '');
+      pintarListaFechas(fechas);
+      cargarDatos(fechaSeleccionada);
+    });
+    listaFecha.appendChild(opt);
+  });
+}
+
+function cargarListaFechas(){
+  const cbName = 'cbf_' + Date.now();
+  window[cbName] = function(data){
+    let fechas = (data && data.fechas) ? data.fechas : [];
+    if(!fechas.includes(FECHA_HOY)) fechas.unshift(FECHA_HOY);
+    fechas.sort((a,b) => b.localeCompare(a));
+    labelFecha.textContent = labelDeFecha(fechaSeleccionada) + (fechaSeleccionada === FECHA_HOY ? ' (hoy)' : '');
+    pintarListaFechas(fechas);
+    delete window[cbName];
+    script.remove();
+  };
+  const script = document.createElement('script');
+  script.src = `${ENDPOINT_URL}?action=getFechas&callback=${cbName}`;
+  script.onerror = function(){
+    delete window[cbName];
+    script.remove();
+    labelFecha.textContent = labelDeFecha(fechaSeleccionada) + (fechaSeleccionada === FECHA_HOY ? ' (hoy)' : '');
+    pintarListaFechas([FECHA_HOY]);
+  };
+  document.body.appendChild(script);
+}
+
+/* ================= LECTURA DE DATOS (JSONP para evitar CORS) ================= */
+function cargarDatos(fecha){
+  const cbName = 'cb_' + Date.now();
+  window[cbName] = function(data){
+    if(data && !data.error){
+      const op = data.opciones || {};
+      cuentas = { v1: op.v1 || 0, v2: op.v2 || 0, v3: op.v3 || 0, v4: op.v4 || 0 };
+      seguidores9Valor = (data.seguidores9 === null || data.seguidores9 === undefined) ? null : data.seguidores9;
+      seguidores14Valor = (data.seguidores14 === null || data.seguidores14 === undefined) ? null : data.seguidores14;
+      inicioDatos = data.inicio || null;
+      render();
+      actualizarVisibilidadSeguidores();
+      actualizarParpadeoSeguidores();
+      actualizarBotonInicio();
+      renderEncuesta(data.encuesta || []);
+    }
+    delete window[cbName];
+    script.remove();
+  };
+  const script = document.createElement('script');
+  script.src = `${ENDPOINT_URL}?action=getData&fecha=${fecha}&callback=${cbName}`;
+  script.onerror = function(){ delete window[cbName]; script.remove(); };
+  document.body.appendChild(script);
+}
+
+/* ================= ESCRITURA ================= */
+function enviarDato(payload, onOk, onError){
+  fetch(ENDPOINT_URL, {
+    method: 'POST',
+    headers: {'Content-Type': 'text/plain;charset=utf-8'},
+    body: JSON.stringify(payload)
+  })
+  .then(r => r.json())
+  .then(res => {
+    if(res && res.ok){ onOk && onOk(); }
+    else { onError && onError(res && res.error); }
+  })
+  .catch((err) => { onError && onError(err && err.message); });
+}
+
+/* ================= ENCUESTA RÁPIDA ================= */
+const PALETA_ENCUESTA = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#8a6fd1'];
+
+const OPCIONES_P2 = ['Sí', 'No', 'Lo había visto, pero no lo había probado'];
+const OPCIONES_P3 = ['Red Bull', 'Monster', 'Score', 'Mr. Big', 'Otra', 'No tomo'];
+const OPCIONES_P4 = ['Sí', 'Tal vez', 'No'];
+
+/*
+  P1 es texto libre: para que la dona no supere 5 categorías, cada
+  respuesta se clasifica por palabras clave en 4 grupos temáticos más
+  "Otros". Conviene revisar las palabras clave cuando lleguen respuestas
+  reales si "Otros" concentra demasiado.
+*/
+const CATEGORIAS_PALABRA = [
+  { nombre: 'Energizante',      stems: ['energ', 'activ', 'poder', 'potent', 'fuerz', 'despiert', 'vital', 'power', 'electr', 'intens', 'rayo', 'pila'] },
+  { nombre: 'Rica / Sabrosa',   stems: ['ric', 'delici', 'sabros', 'buen', 'exquisit', 'agradabl', 'top', 'genial', 'excelent'] },
+  { nombre: 'Refrescante',      stems: ['fresc', 'helad', 'frio', 'fria'] },
+  { nombre: 'Dulce',            stems: ['dulc', 'azuc', 'empalag'] },
+  { nombre: 'Otros',            stems: [] }
+];
+
+function normalizarTexto(t){
+  return (t || '')
+    .toString()
+    .toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .trim();
+}
+
+function clasificar(respuesta, categorias){
+  const norm = normalizarTexto(respuesta);
+  for(let i = 0; i < categorias.length - 1; i++){
+    if(categorias[i].stems.some(stem => norm.includes(stem))) return categorias[i].nombre;
+  }
+  return categorias[categorias.length - 1].nombre;
+}
+
+function agruparPalabras(respuestas){
+  const conteo = {};
+  CATEGORIAS_PALABRA.forEach(c => conteo[c.nombre] = 0);
+  respuestas.forEach(r => {
+    if(!normalizarTexto(r)) return;
+    conteo[clasificar(r, CATEGORIAS_PALABRA)]++;
+  });
+  return CATEGORIAS_PALABRA
+    .map((c, i) => ({ nombre: c.nombre, valor: conteo[c.nombre], color: PALETA_ENCUESTA[i] }))
+    .filter(c => c.valor > 0);
+}
+
+const COLORES_P2 = ['#1baf7a', '#c0392b', '#eda100'];
+const COLORES_P4 = ['#1baf7a', '#eda100', '#c0392b'];
+
+function agruparOpciones(respuestas, opciones, colores){
+  const paleta = colores || PALETA_ENCUESTA;
+  const conteo = {};
+  opciones.forEach(o => conteo[o] = 0);
+  respuestas.forEach(r => { if(conteo.hasOwnProperty(r)) conteo[r]++; });
+  return opciones
+    .map((o, i) => ({ nombre: o, valor: conteo[o], color: paleta[i] }))
+    .filter(c => c.valor > 0);
+}
+
+const charts = {};
+
+function dibujarDonut(n, grupos){
+  const canvas = document.getElementById('chart-encuesta-' + n);
+  const sinDatosEl = document.getElementById('sin-datos-' + n);
+  const leyendaEl = document.getElementById('leyenda-encuesta-' + n);
+
+  if(charts[n]){ charts[n].destroy(); charts[n] = null; }
+
+  const total = grupos.reduce((a, g) => a + g.valor, 0);
+  if(total === 0){
+    sinDatosEl.classList.add('visible');
+    canvas.style.visibility = 'hidden';
+    leyendaEl.innerHTML = '';
+    return;
+  }
+  sinDatosEl.classList.remove('visible');
+  canvas.style.visibility = 'visible';
+
+  charts[n] = new Chart(canvas, {
+    type: 'doughnut',
+    data: {
+      labels: grupos.map(g => g.nombre),
+      datasets: [{
+        data: grupos.map(g => g.valor),
+        backgroundColor: grupos.map(g => g.color),
+        borderColor: '#ffffff',
+        borderWidth: 3,
+        borderRadius: 4,
+        hoverOffset: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '62%',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              const pct = Math.round(ctx.parsed / total * 100);
+              return ` ${ctx.label}: ${formatNumero(ctx.parsed)} (${pct}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+
+  leyendaEl.innerHTML = '';
+  grupos.forEach(g => {
+    const pct = Math.round(g.valor / total * 100);
+    const li = document.createElement('li');
+    li.className = 'leyenda-item';
+    li.innerHTML = `<span class="leyenda-dot" style="background:${g.color}"></span>
+      <span class="leyenda-label"></span>
+      <span class="leyenda-valor">${formatNumero(g.valor)} (${pct}%)</span>`;
+    li.querySelector('.leyenda-label').textContent = g.nombre;
+    leyendaEl.appendChild(li);
+  });
+}
+
+function renderEncuesta(filas){
+  dibujarDonut(1, agruparPalabras(filas.map(f => f.p1)));
+  dibujarDonut(2, agruparOpciones(filas.map(f => f.p2), OPCIONES_P2, COLORES_P2));
+  dibujarDonut(3, agruparOpciones(filas.map(f => f.p3), OPCIONES_P3));
+  dibujarDonut(4, agruparOpciones(filas.map(f => f.p4), OPCIONES_P4, COLORES_P4));
+}
+
+/* Botones de opción */
+const respuestasSel = { 2:null, 3:null, 4:null };
+const inputOtra = document.getElementById('input-encuesta-3-otra');
+
+function construirOpciones(n, opciones){
+  const cont = document.querySelector(`.opciones-encuesta[data-pregunta="${n}"]`);
+  cont.innerHTML = '';
+  opciones.forEach(texto => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'opcion-encuesta';
+    b.textContent = texto;
+    b.addEventListener('click', () => {
+      respuestasSel[n] = texto;
+      cont.querySelectorAll('.opcion-encuesta').forEach(x => x.classList.toggle('seleccionada', x === b));
+      if(n === 3){
+        inputOtra.classList.toggle('visible', texto === 'Otra');
+        if(texto === 'Otra') inputOtra.focus();
+      }
+    });
+    cont.appendChild(b);
+  });
+}
+construirOpciones(2, OPCIONES_P2);
+construirOpciones(3, OPCIONES_P3);
+construirOpciones(4, OPCIONES_P4);
+
+function limpiarEncuesta(){
+  document.getElementById('input-encuesta-1').value = '';
+  inputOtra.value = '';
+  inputOtra.classList.remove('visible');
+  respuestasSel[2] = respuestasSel[3] = respuestasSel[4] = null;
+  document.querySelectorAll('.opcion-encuesta.seleccionada').forEach(x => x.classList.remove('seleccionada'));
+}
+
+document.getElementById('btn-enviar-encuesta').addEventListener('click', () => {
+  const p1 = document.getElementById('input-encuesta-1').value.trim();
+  const p3otra = inputOtra.value.trim();
+
+  if(!p1 || !respuestasSel[2] || !respuestasSel[3] || !respuestasSel[4]){
+    mostrarToast('Responde todas las preguntas', true);
+    return;
+  }
+  if(respuestasSel[3] === 'Otra' && !p3otra){
+    mostrarToast('Indica qué otra bebida tomas', true);
+    return;
+  }
+
+  enviarDato(
+    {
+      action:'submitEncuesta',
+      fecha: fechaSeleccionada,
+      p1: p1,
+      p2: respuestasSel[2],
+      p3: respuestasSel[3],
+      p3otra: respuestasSel[3] === 'Otra' ? p3otra : '',
+      p4: respuestasSel[4]
+    },
+    () => {
+      limpiarEncuesta();
+      mostrarToast('¡Gracias por responder!');
+      cargarDatos(fechaSeleccionada);
+    },
+    (msg) => mostrarToast('No se pudo registrar' + (msg ? ': ' + msg : '.'), true)
+  );
+});
+
+/* ================= TECLADO NUMÉRICO PROPIO ================= */
+const tecladoOverlay = document.getElementById('teclado-overlay');
+const tecladoDisplay = document.getElementById('teclado-display');
+const tecladoGrid = document.getElementById('teclado-grid');
+const teclaDecimal = { el:null };
+let tecladoValor = '';
+let tecladoCfg = null; // { titulo, decimal, input, onListo }
+
+function formatearRaw(raw){
+  if(raw === '') return '';
+  const [ent, dec] = raw.split('.');
+  const entFmt = formatNumero(parseInt(ent || '0', 10));
+  return dec !== undefined ? `${entFmt},${dec}` : entFmt;
+}
+function rawDesdeTexto(txt){
+  // "1.234,5" -> "1234.5"
+  return (txt || '').replace(/\./g, '').replace(',', '.').replace(/[^\d.]/g, '');
+}
+
+function pintarDisplayTeclado(){
+  if(tecladoValor === ''){
+    tecladoDisplay.textContent = tecladoCfg ? tecladoCfg.titulo : '';
+    tecladoDisplay.classList.add('vacio');
+  } else {
+    tecladoDisplay.textContent = formatearRaw(tecladoValor);
+    tecladoDisplay.classList.remove('vacio');
+  }
+}
+
+(function construirTeclado(){
+  ['1','2','3','4','5','6','7','8','9','.','0','⌫'].forEach(t => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'tecla' + (t === '⌫' ? ' tecla-borrar' : '');
+    b.textContent = t === '.' ? ',' : t;
+    if(t === '.') teclaDecimal.el = b;
+    b.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      if(t === '⌫'){
+        tecladoValor = tecladoValor.slice(0, -1);
+      } else if(t === '.'){
+        if(!tecladoCfg.decimal || tecladoValor.includes('.')) return;
+        tecladoValor = (tecladoValor === '' ? '0' : tecladoValor) + '.';
+      } else {
+        const [ent, dec] = tecladoValor.split('.');
+        if(dec !== undefined){ if(dec.length >= 2) return; }
+        else if(ent.length >= 9) return;
+        tecladoValor = (tecladoValor === '0' ? '' : tecladoValor) + t;
+      }
+      pintarDisplayTeclado();
+    });
+    tecladoGrid.appendChild(b);
+  });
+  const ok = document.createElement('button');
+  ok.type = 'button';
+  ok.className = 'tecla tecla-ok';
+  ok.textContent = 'Listo';
+  ok.addEventListener('click', (ev) => { ev.stopPropagation(); cerrarTeclado(true); });
+  tecladoGrid.appendChild(ok);
+})();
+
+function abrirTeclado(cfg){
+  tecladoCfg = cfg;
+  tecladoValor = cfg.input ? rawDesdeTexto(cfg.input.value) : '';
+  teclaDecimal.el.classList.toggle('tecla-deshabilitada', !cfg.decimal);
+  if(cfg.input) cfg.input.classList.add('enfocado');
+  pintarDisplayTeclado();
+  tecladoOverlay.classList.add('visible');
+}
+
+function cerrarTeclado(aplicar){
+  if(!tecladoCfg) return;
+  const cfg = tecladoCfg;
+  const raw = tecladoValor.replace(/\.$/, '');
+  if(cfg.input){
+    if(aplicar) cfg.input.value = formatearRaw(raw);
+    cfg.input.classList.remove('enfocado');
+  }
+  tecladoOverlay.classList.remove('visible');
+  tecladoCfg = null;
+  if(aplicar && cfg.onListo) cfg.onListo(raw);
+}
+
+tecladoOverlay.addEventListener('click', (ev) => {
+  if(ev.target === tecladoOverlay) cerrarTeclado(true);
+});
+
+/* ================= REGISTRO INICIO JORNADA ================= */
+const CAMPOS_PERSONAL = [
+  { key:'promotora1', label:'Promotora 1' },
+  { key:'promotora2', label:'Promotora 2' },
+  { key:'promotora3', label:'Promotora 3' },
+  { key:'promotora4', label:'Promotora 4' },
+  { key:'promotora5', label:'Promotora 5' },
+  { key:'reponedor',  label:'Reponedor' },
+  { key:'supervisor', label:'Supervisor' }
+];
+const CAMPOS_NUM = ['latas', 'cavas', 'hielo', 'agua'];
+
+const modalInicio = document.getElementById('modal-inicio');
+const modalInicioPanel = document.getElementById('modal-inicio-panel');
+const btnInicio = document.getElementById('btn-inicio');
+const btnInicioLabel = document.getElementById('btn-inicio-label');
+
+(function construirCamposPersonal(){
+  const cont = document.getElementById('campos-personal');
+  CAMPOS_PERSONAL.forEach(c => {
+    const div = document.createElement('div');
+    div.className = 'campo';
+    div.innerHTML = `<label for="ini-${c.key}">${c.label}</label>
+      <input id="ini-${c.key}" type="text" maxlength="60" placeholder="Nombre y apellido" autocomplete="off">`;
+    cont.appendChild(div);
+  });
+})();
+
+CAMPOS_NUM.forEach(k => {
+  const inp = document.getElementById('ini-' + k);
+  inp.addEventListener('click', () => {
+    if(modalInicioPanel.classList.contains('solo-lectura')) return;
+    abrirTeclado({ titulo: inp.dataset.titulo, decimal: inp.dataset.decimal === '1', input: inp });
+  });
+});
+
+function actualizarBotonInicio(){
+  const esHoy = fechaSeleccionada === FECHA_HOY;
+  if(inicioDatos){
+    btnInicio.style.display = '';
+    btnInicio.classList.add('registrado');
+    btnInicio.classList.remove('parpadeando');
+    btnInicioLabel.textContent = esHoy ? '✓ INICIO jornada registrado (ver / editar)' : '✓ Ver INICIO jornada';
+  } else if(esHoy){
+    btnInicio.style.display = '';
+    btnInicio.classList.remove('registrado');
+    btnInicio.classList.add('parpadeando');
+    btnInicioLabel.textContent = 'Registro INICIO jornada';
+  } else {
+    btnInicio.style.display = 'none';
+  }
+}
+
+function llenarFormularioInicio(d){
+  document.getElementById('ini-ubicacion').value = d ? (d.ubicacion || '') : '';
+  CAMPOS_NUM.forEach(k => {
+    const v = d && d[k] !== '' && d[k] !== null && d[k] !== undefined ? String(d[k]) : '';
+    document.getElementById('ini-' + k).value = formatearRaw(v);
+  });
+  CAMPOS_PERSONAL.forEach(c => {
+    document.getElementById('ini-' + c.key).value = d ? (d[c.key] || '') : '';
+  });
+}
+
+btnInicio.addEventListener('click', () => {
+  const soloLectura = fechaSeleccionada !== FECHA_HOY;
+  modalInicioPanel.classList.toggle('solo-lectura', soloLectura);
+  document.getElementById('modal-inicio-fecha').textContent = labelDeFecha(fechaSeleccionada);
+  llenarFormularioInicio(inicioDatos);
+  modalInicio.classList.add('visible');
+  modalInicioPanel.scrollTop = 0;
+});
+
+function cerrarModalInicio(){ modalInicio.classList.remove('visible'); }
+document.getElementById('btn-inicio-cancelar').addEventListener('click', cerrarModalInicio);
+modalInicio.addEventListener('click', (ev) => { if(ev.target === modalInicio) cerrarModalInicio(); });
+
+document.getElementById('btn-inicio-guardar').addEventListener('click', () => {
+  const datos = { ubicacion: document.getElementById('ini-ubicacion').value.trim() };
+  CAMPOS_NUM.forEach(k => datos[k] = rawDesdeTexto(document.getElementById('ini-' + k).value));
+  CAMPOS_PERSONAL.forEach(c => datos[c.key] = document.getElementById('ini-' + c.key).value.trim());
+
+  if(!datos.ubicacion){ mostrarToast('Ingresa la ubicación del punto', true); return; }
+  if(CAMPOS_NUM.some(k => datos[k] === '')){ mostrarToast('Completa las cantidades que llegaron', true); return; }
+
+  const btn = document.getElementById('btn-inicio-guardar');
+  btn.disabled = true; btn.textContent = 'Guardando…';
+  enviarDato(
+    Object.assign({ action:'submitInicio', fecha: fechaSeleccionada }, datos),
+    () => {
+      btn.disabled = false; btn.textContent = 'Guardar';
+      inicioDatos = datos;
+      cerrarModalInicio();
+      render();
+      actualizarBotonInicio();
+      mostrarToast('INICIO jornada registrado');
+      cargarListaFechas();
+    },
+    (msg) => {
+      btn.disabled = false; btn.textContent = 'Guardar';
+      mostrarToast('No se pudo registrar' + (msg ? ': ' + msg : '.'), true);
+    }
+  );
+});
+
+/* ================= SEGUIDORES (9:00 / 14:00) ================= */
+const MIN_0850 = 8*60 + 50;
+const MIN_1350 = 13*60 + 50;
+const URL_FAMOID = 'https://famoid.com/es/contador-seguidores-instagram/';
+
+const btnReg9 = document.getElementById('btn-registrar-9');
+const btnReg14 = document.getElementById('btn-registrar-14');
+const btnConsultarSeg = document.getElementById('btn-consultar-seguidores');
+
+function minutosDesdeMedianoche(){
+  const d = new Date();
+  return d.getHours()*60 + d.getMinutes();
+}
+
+function actualizarVisibilidadSeguidores(){
+  const esHoy = fechaSeleccionada === FECHA_HOY;
+  btnReg9.style.display = (esHoy && seguidores9Valor === null) ? '' : 'none';
+  btnReg14.style.display = (esHoy && seguidores14Valor === null) ? '' : 'none';
+  btnConsultarSeg.style.display = (esHoy && (seguidores9Valor === null || seguidores14Valor === null)) ? '' : 'none';
+}
+
+function actualizarParpadeoSeguidores(){
+  const esHoy = fechaSeleccionada === FECHA_HOY;
+  const minutos = minutosDesdeMedianoche();
+  btnReg9.classList.toggle('parpadeando', esHoy && seguidores9Valor === null && minutos >= MIN_0850);
+  btnReg14.classList.toggle('parpadeando', esHoy && seguidores14Valor === null && minutos >= MIN_1350);
+}
+setInterval(actualizarParpadeoSeguidores, 15000);
+
+btnConsultarSeg.addEventListener('click', () => window.open(URL_FAMOID, '_blank'));
+
+function registrarSeguidores(hora){
+  abrirTeclado({
+    titulo: `Seguidores ${hora}.00 hrs`,
+    decimal: false,
+    onListo: (raw) => {
+      if(raw === '') return;
+      const val = parseInt(raw, 10);
+      enviarDato(
+        {action: hora === '9' ? 'submitSeguidores9' : 'submitSeguidores14', fecha: fechaSeleccionada, valor: val},
+        () => {
+          if(hora === '9') seguidores9Valor = val; else seguidores14Valor = val;
+          render();
+          actualizarVisibilidadSeguidores();
+          actualizarParpadeoSeguidores();
+          mostrarToast('Seguidores registrados');
+        },
+        (msg) => mostrarToast('No se pudo registrar' + (msg ? ': ' + msg : '.'), true)
+      );
+    }
+  });
+}
+btnReg9.addEventListener('click', () => registrarSeguidores('9'));
+btnReg14.addEventListener('click', () => registrarSeguidores('14'));
+
+/* ================= JOYSTICK (4 direcciones diagonales) ================= */
+const pad = document.getElementById('joystick-pad');
+const knob = document.getElementById('joystick-knob');
+
+const DIRECCIONES = [
+  { dx:-0.7071, dy:-0.7071, opcion:'Volt 1' },
+  { dx: 0.7071, dy:-0.7071, opcion:'Volt 2' },
+  { dx:-0.7071, dy: 0.7071, opcion:'Volt 3' },
+  { dx: 0.7071, dy: 0.7071, opcion:'Volt 4' }
+];
+
+let arrastrando = false;
+let centroX = 0, centroY = 0;
+let padRadio = 100;
+
+function centrarKnob(){
+  knob.style.transform = 'translate(-50%, -50%)';
+}
+
+knob.addEventListener('pointerdown', (ev) => {
+  arrastrando = true;
+  knob.style.transition = 'none';
+  knob.setPointerCapture(ev.pointerId);
+  const rect = pad.getBoundingClientRect();
+  centroX = rect.left + rect.width/2;
+  centroY = rect.top + rect.height/2;
+  padRadio = Math.min(rect.width, rect.height)/2 - 40;
+  knob.classList.add('activo');
+});
+
+knob.addEventListener('pointermove', (ev) => {
+  if(!arrastrando) return;
+  let dx = ev.clientX - centroX;
+  let dy = ev.clientY - centroY;
+  const dist = Math.sqrt(dx*dx + dy*dy);
+  if(dist > padRadio){
+    dx = dx / dist * padRadio;
+    dy = dy / dist * padRadio;
+  }
+  knob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+});
+
+function soltarKnob(ev){
+  if(!arrastrando) return;
+  arrastrando = false;
+  knob.classList.remove('activo');
+  const dx = ev.clientX - centroX;
+  const dy = ev.clientY - centroY;
+  const dist = Math.sqrt(dx*dx + dy*dy);
+
+  knob.style.transition = 'transform 0.45s cubic-bezier(0.22, 1, 0.36, 1)';
+  centrarKnob();
+
+  const umbral = padRadio * 0.67;
+  if(dist < umbral) return;
+
+  const ndx = dx/dist, ndy = dy/dist;
+  let mejor = null, mejorProd = -Infinity;
+  DIRECCIONES.forEach(d => {
+    const prod = d.dx*ndx + d.dy*ndy;
+    if(prod > mejorProd){ mejorProd = prod; mejor = d; }
+  });
+  if(mejor) registrarOpcion(mejor.opcion);
+}
+
+knob.addEventListener('pointerup', soltarKnob);
+knob.addEventListener('pointercancel', () => {
+  arrastrando = false;
+  knob.classList.remove('activo');
+  knob.style.transition = 'transform 0.45s cubic-bezier(0.22, 1, 0.36, 1)';
+  centrarKnob();
+});
+
+/* ================= REGISTRO (sin confirmación) ================= */
+function registrarOpcion(opcion){
+  enviarDato(
+    {action:'submitOpcion', fecha: fechaSeleccionada, opcion: opcion},
+    () => {
+      const op = OPCIONES_VOLT.find(o => o.id === opcion);
+      if(op) cuentas[op.key]++;
+      render();
+      mostrarToast(`Registrado: ${opcion}`);
+      cargarListaFechas();
+    },
+    (msg) => mostrarToast('No se pudo registrar' + (msg ? ': ' + msg : '.'), true)
+  );
+}
+
+/* ================= INICIO ================= */
+centrarKnob();
+render();
+actualizarVisibilidadSeguidores();
+actualizarParpadeoSeguidores();
+actualizarBotonInicio();
+renderEncuesta([]);
+cargarListaFechas();
+cargarDatos(fechaSeleccionada);
+setInterval(() => cargarDatos(fechaSeleccionada), REFRESH_MS);
+</script>
+</body>
+</html>

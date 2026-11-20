@@ -20,10 +20,10 @@
     --text:#10204f;
     --text-dim:#5b6a8f;
     --border:#dbe2f1;
-    --v1:#1d3fa8;
-    --v2:#f7c600;
-    --v3:#d93a2b;
-    --v4:#1a9e4b;
+    --v1:#0021a0; /* azul de fondo lata 1 */
+    --v2:#c3c6cc; /* blanco grisáceo lata 2 */
+    --v3:#00b4d0; /* celeste lata 3 */
+    --v4:#b8e03a; /* verde VOLT lata 4 */
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   html{overflow-x:hidden; overscroll-behavior-x:none;}
@@ -213,19 +213,18 @@
     -webkit-user-select:none;
     user-select:none;
   }
-  .rayo-fondo{
+  .logo-fondo{
     position:absolute;
-    font-size:min(28vw, 140px);
-    line-height:1;
+    width:min(30vw, 150px);
+    height:min(30vw, 150px);
     transform:translate(-50%,-50%);
-    opacity:0.35;
     z-index:0;
     pointer-events:none;
   }
-  .rayo-1{top:25%; left:25%;}
-  .rayo-2{top:25%; left:75%;}
-  .rayo-3{top:75%; left:25%;}
-  .rayo-4{top:75%; left:75%;}
+  .logo-1{top:25%; left:25%; color:#fff431; opacity:0.85;}
+  .logo-2{top:25%; left:75%; color:#0021a0; opacity:0.22;}
+  .logo-3{top:75%; left:25%; color:#ffffff; opacity:0.6;}
+  .logo-4{top:75%; left:75%; color:#0021a0; opacity:0.22;}
   .joystick-conteo{
     position:absolute;
     font-size:clamp(1.6rem, 7vw, 2.6rem);
@@ -235,9 +234,9 @@
     pointer-events:none;
   }
   .conteo-v1{top:4%; left:47%; transform:translate(-100%,0); color:#ffffff; text-shadow:0 2px 6px rgba(0,0,0,0.4);}
-  .conteo-v2{top:4%; left:53%; color:var(--teal-dark);}
-  .conteo-v3{bottom:4%; left:47%; transform:translate(-100%,0); color:#ffffff; text-shadow:0 2px 6px rgba(0,0,0,0.4);}
-  .conteo-v4{bottom:4%; left:53%; color:#ffffff; text-shadow:0 2px 6px rgba(0,0,0,0.4);}
+  .conteo-v2{top:4%; left:53%; color:#0f2266;}
+  .conteo-v3{bottom:4%; left:47%; transform:translate(-100%,0); color:#0f2266;}
+  .conteo-v4{bottom:4%; left:53%; color:#0f2266;}
   .joystick-svg{
     position:absolute;
     inset:0;
@@ -1032,10 +1031,10 @@
   <div class="seccion-joystick">
     <div class="joystick-full-bleed">
       <div class="joystick-pad" id="joystick-pad">
-        <span class="rayo-fondo rayo-1">⚡</span>
-        <span class="rayo-fondo rayo-2">⚡</span>
-        <span class="rayo-fondo rayo-3">⚡</span>
-        <span class="rayo-fondo rayo-4">⚡</span>
+        <svg class="logo-fondo logo-1" viewBox="0 0 100 100" aria-hidden="true"><g fill="none" stroke="currentColor"><circle cx="50" cy="50" r="43" stroke-width="13"/><circle cx="50" cy="50" r="27.5" stroke-width="6"/><circle cx="50" cy="50" r="15.5" stroke-width="6.5"/></g></svg>
+        <svg class="logo-fondo logo-2" viewBox="0 0 100 100" aria-hidden="true"><g fill="none" stroke="currentColor"><circle cx="50" cy="50" r="43" stroke-width="13"/><circle cx="50" cy="50" r="27.5" stroke-width="6"/><circle cx="50" cy="50" r="15.5" stroke-width="6.5"/></g></svg>
+        <svg class="logo-fondo logo-3" viewBox="0 0 100 100" aria-hidden="true"><g fill="none" stroke="currentColor"><circle cx="50" cy="50" r="43" stroke-width="13"/><circle cx="50" cy="50" r="27.5" stroke-width="6"/><circle cx="50" cy="50" r="15.5" stroke-width="6.5"/></g></svg>
+        <svg class="logo-fondo logo-4" viewBox="0 0 100 100" aria-hidden="true"><g fill="none" stroke="currentColor"><circle cx="50" cy="50" r="43" stroke-width="13"/><circle cx="50" cy="50" r="27.5" stroke-width="6"/><circle cx="50" cy="50" r="15.5" stroke-width="6.5"/></g></svg>
 
         <div class="joystick-conteo conteo-v1" id="joystick-conteo-v1">0</div>
         <div class="joystick-conteo conteo-v2" id="joystick-conteo-v2">0</div>
@@ -1276,10 +1275,10 @@ const BACKEND_ESPERADO = '2026-11-19.3'; // versión de Code.gs con la que funci
 const META_LATAS = 2500;
 
 const OPCIONES_VOLT = [
-  { id:'Volt 1', key:'v1', color:'#1d3fa8' },
-  { id:'Volt 2', key:'v2', color:'#f7c600' },
-  { id:'Volt 3', key:'v3', color:'#d93a2b' },
-  { id:'Volt 4', key:'v4', color:'#1a9e4b' }
+  { id:'Volt 1', key:'v1', color:'#0021a0', texto:'#0021a0' },
+  { id:'Volt 2', key:'v2', color:'#c3c6cc', texto:'#7d828c' },
+  { id:'Volt 3', key:'v3', color:'#00b4d0', texto:'#0093ad' },
+  { id:'Volt 4', key:'v4', color:'#b8e03a', texto:'#7aa315' }
 ];
 
 /* ================= FECHAS ================= */
@@ -1339,7 +1338,7 @@ function formatNumero(n){
     const fila = document.createElement('div');
     fila.className = 'barra-fila';
     fila.innerHTML = `
-      <span class="barra-etiqueta" style="color:${op.key === 'v2' ? '#b08d00' : op.color}">${op.id}</span>
+      <span class="barra-etiqueta" style="color:${op.texto}">${op.id}</span>
       <div class="barra-track"><div class="barra-fill" id="barra-${op.key}" style="background:${op.color}"></div></div>
       <span class="barra-valor"><span id="conteo-${op.key}">0</span><span class="barra-pct" id="pct-${op.key}">(0%)</span></span>`;
     cont.appendChild(fila);

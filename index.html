@@ -209,7 +209,7 @@
       linear-gradient(to right, var(--v1) 50%, var(--v2) 50%) top / 100% 50% no-repeat,
       linear-gradient(to right, var(--v3) 50%, var(--v4) 50%) bottom / 100% 50% no-repeat;
     box-shadow:inset 0 0 0 2px rgba(0,0,0,0.06);
-    touch-action:none;
+    touch-action:pan-y;
     -webkit-user-select:none;
     user-select:none;
     --lata-h:20%;
@@ -306,6 +306,7 @@
     box-shadow:0 8px 22px rgba(0,0,0,0.45);
   }
   .joystick-knob svg{width:38px; height:38px;}
+  .joystick-knob.fuera{border-color:var(--red); opacity:0.75;}
 
   /* ===== Barras Volt 1–4 ===== */
   .barras-fruta{
@@ -2262,78 +2263,129 @@ const DIRECCIONES = [
   { dx: 0.7071, dy: 0.7071, opcion:'Frutos del Bosque' }
 ];
 
-let arrastrando = false;
-let centroX = 0, centroY = 0;
-let padRadio = 100;
+/*
+  Reglas del joystick:
+  - Tocando fuera de la perilla, la pantalla se desplaza normalmente.
+  - Tocando la perilla, los primeros milímetros deciden qué se hace:
+      · si el dedo va en diagonal hacia una lata (±25°), la perilla queda
+        "encajada" en ese canal y solo se mueve a lo largo de él;
+      · si no, el gesto se interpreta como desplazamiento de la pantalla.
+  - Solo se registra si la perilla llega al final del canal (≥ 85 %) y
+    el dedo no se salió del canal.
+*/
+const ANGULO_CANAL = Math.cos(25 * Math.PI / 180);
+const UMBRAL_DECISION = 12;   // px antes de decidir canal o desplazamiento
+const LLEGADA_MINIMA = 0.85;  // fracción del canal que hay que recorrer
+const DESVIO_MAXIMO = 0.45;   // desvío lateral permitido (fracción del canal)
 
-function centrarKnob(){
+let arrastrando = false;      // true solo mientras la perilla está encajada en un canal
+let modoGesto = null;         // null | 'pendiente' | 'canal' | 'scroll'
+let canal = null;
+let inicioX = 0, inicioY = 0, prevY = 0, prevT = 0, velY = 0;
+let recorridoMax = 100;
+let avance = 0;
+let salioDelCanal = false;
+let inercia = null;
+
+function centrarKnob(animado){
+  knob.style.transition = animado ? 'transform 0.45s cubic-bezier(0.22, 1, 0.36, 1)' : 'none';
   knob.style.transform = 'translate(-50%, -50%)';
 }
 
 function medirPad(){
   const rect = pad.getBoundingClientRect();
-  centroX = rect.left + rect.width/2;
-  centroY = rect.top + rect.height/2;
-  padRadio = Math.min(rect.width, rect.height)/2 - 40;
+  // largo del canal = desde el centro hasta el extremo de la línea guía (68,7/300 del lado)
+  recorridoMax = rect.width * (81.3 / 300) * Math.SQRT2;
 }
 
-// Mientras se arrastra el joystick la pantalla no se desplaza
-pad.addEventListener('touchmove', (ev) => { ev.preventDefault(); }, { passive:false });
-document.addEventListener('touchmove', (ev) => { if(arrastrando) ev.preventDefault(); }, { passive:false });
+// Mientras la perilla está encajada en un canal, la pantalla no se mueve
+document.addEventListener('touchmove', (ev) => { if(modoGesto === 'canal') ev.preventDefault(); }, { passive:false });
+
+function detenerInercia(){ if(inercia){ cancelAnimationFrame(inercia); inercia = null; } }
 
 knob.addEventListener('pointerdown', (ev) => {
   ev.preventDefault();
-  arrastrando = true;
-  knob.style.transition = 'none';
+  detenerInercia();
+  modoGesto = 'pendiente';
+  canal = null; avance = 0; salioDelCanal = false;
+  inicioX = ev.clientX; inicioY = ev.clientY;
+  prevY = ev.clientY; prevT = performance.now(); velY = 0;
   try { knob.setPointerCapture(ev.pointerId); } catch(e){}
   medirPad();
-  knob.classList.add('activo');
 });
 
 knob.addEventListener('pointermove', (ev) => {
-  if(!arrastrando) return;
-  medirPad(); // por si algo movió la pantalla durante el arrastre
-  let dx = ev.clientX - centroX;
-  let dy = ev.clientY - centroY;
-  const dist = Math.sqrt(dx*dx + dy*dy);
-  if(dist > padRadio){
-    dx = dx / dist * padRadio;
-    dy = dy / dist * padRadio;
+  if(!modoGesto) return;
+
+  if(modoGesto === 'scroll'){
+    const ahora = performance.now();
+    const dyPaso = prevY - ev.clientY;
+    window.scrollBy(0, dyPaso);
+    const dt = Math.max(ahora - prevT, 1);
+    velY = 0.8 * (dyPaso / dt) + 0.2 * velY;
+    prevY = ev.clientY; prevT = ahora;
+    return;
   }
-  knob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+
+  const dx = ev.clientX - inicioX;
+  const dy = ev.clientY - inicioY;
+  const dist = Math.hypot(dx, dy);
+
+  if(modoGesto === 'pendiente'){
+    if(dist < UMBRAL_DECISION) return;
+    let mejor = null, mejorProd = -Infinity;
+    DIRECCIONES.forEach(d => {
+      const prod = (d.dx*dx + d.dy*dy) / dist;
+      if(prod > mejorProd){ mejorProd = prod; mejor = d; }
+    });
+    if(mejorProd >= ANGULO_CANAL){
+      modoGesto = 'canal';
+      canal = mejor;
+      arrastrando = true;
+      knob.classList.add('activo');
+      knob.style.transition = 'none';
+    } else {
+      modoGesto = 'scroll';
+      window.scrollBy(0, prevY - ev.clientY);
+      prevY = ev.clientY; prevT = performance.now();
+      return;
+    }
+  }
+
+  // modo canal: la perilla solo se mueve a lo largo de la diagonal elegida
+  const proy = dx*canal.dx + dy*canal.dy;
+  const lateral = Math.abs(-dx*canal.dy + dy*canal.dx);
+  if(lateral > recorridoMax * DESVIO_MAXIMO || proy < -UMBRAL_DECISION) salioDelCanal = true;
+  avance = Math.max(0, Math.min(proy, recorridoMax));
+  knob.style.transform = `translate(calc(-50% + ${canal.dx*avance}px), calc(-50% + ${canal.dy*avance}px))`;
+  knob.classList.toggle('fuera', salioDelCanal);
 });
 
-function soltarKnob(ev){
-  if(!arrastrando) return;
-  arrastrando = false;
-  knob.classList.remove('activo');
-  medirPad();
-  const dx = ev.clientX - centroX;
-  const dy = ev.clientY - centroY;
-  const dist = Math.sqrt(dx*dx + dy*dy);
+function terminarGesto(registrar){
+  const modo = modoGesto;
+  const llegó = canal && !salioDelCanal && avance >= recorridoMax * LLEGADA_MINIMA;
+  const opcion = canal ? canal.opcion : null;
 
-  knob.style.transition = 'transform 0.45s cubic-bezier(0.22, 1, 0.36, 1)';
-  centrarKnob();
+  modoGesto = null; arrastrando = false; canal = null;
+  knob.classList.remove('activo', 'fuera');
+  centrarKnob(true);
 
-  const umbral = padRadio * 0.67;
-  if(dist < umbral) return;
-
-  const ndx = dx/dist, ndy = dy/dist;
-  let mejor = null, mejorProd = -Infinity;
-  DIRECCIONES.forEach(d => {
-    const prod = d.dx*ndx + d.dy*ndy;
-    if(prod > mejorProd){ mejorProd = prod; mejor = d; }
-  });
-  if(mejor) registrarOpcion(mejor.opcion);
+  if(modo === 'scroll' && Math.abs(velY) > 0.15){
+    // inercia suave al soltar, como el desplazamiento normal
+    let v = velY * 16;
+    const paso = () => {
+      window.scrollBy(0, v);
+      v *= 0.94;
+      inercia = Math.abs(v) > 0.5 ? requestAnimationFrame(paso) : null;
+    };
+    inercia = requestAnimationFrame(paso);
+  }
+  if(registrar && modo === 'canal' && llegó) registrarOpcion(opcion);
 }
 
-knob.addEventListener('pointerup', soltarKnob);
-knob.addEventListener('pointercancel', () => {
-  arrastrando = false;
-  knob.classList.remove('activo');
-  knob.style.transition = 'transform 0.45s cubic-bezier(0.22, 1, 0.36, 1)';
-  centrarKnob();
-});
+knob.addEventListener('pointerup', () => terminarGesto(true));
+knob.addEventListener('pointercancel', () => terminarGesto(false));
+knob.addEventListener('lostpointercapture', () => { if(modoGesto) terminarGesto(false); });
 
 /* ================= REGISTRO DEL JOYSTICK: COLA LOCAL ================= */
 /*
